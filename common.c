@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <stdio.h>
 #include <assert.h>
+#include <iostream>
 using namespace std;
 
 #define GLM_FORCE_RADIANS
@@ -13,13 +14,15 @@ using namespace glm;
 #include "memory.h"
 #include "common.h"
 
-
 #define CUBE_LEN_X 10
 #define CUBE_LEN_Y 10
 #define CUBE_LEN_Z 10
 #define SCAL_LEN 0.1f
 #define N_PARTICLES (CUBE_LEN_X*CUBE_LEN_Y*CUBE_LEN_Z)
-#define CELL_CAP 50
+#define CELL_CAP 100
+
+
+
 
 int get_grid_index(grid_struc* g, vec3 pos)
 {
@@ -89,10 +92,12 @@ void alloc_search_grid(grid_struc* g, vec3* pos, int n_particles, float grid_len
 
 	g->N_cells = g->width*g->height*g->depth;
 
+	//cout << "N_cells: " << g->N_cells << endl;
+
 	if (g->N_cells > 50000)
 	{
 		printf("Abort: N_cells = %d \n", g->N_cells);
-		exit(0);
+		//exit(0);
 	}
 
 	if (g->cell_mem != NULL)
@@ -113,6 +118,9 @@ void alloc_search_grid(grid_struc* g, vec3* pos, int n_particles, float grid_len
 		g->utilization[g_index]++;
 	}
 
+	//for (int i=0; i<g->N_cells; i++)
+	//	if (g->utilization[i]> 2)
+	//		cout << i << "th cell: " << g->utilization[i] << endl;
 }
 
 
@@ -150,8 +158,6 @@ void destroy_nbr_list(neighbor_struc* nbr_list)
 void add_neighbor(neighbor_struc* nbr_list, int index_p, int index_n, float distsq)
 {
 	int util = nbr_list->utilization[index_p];
-	//printf("\t index_p=%d, index_n=%d \t distsq=%f \n", index_p, index_n, distsq);
-	//printf("\t\t Utilization=%d \n", util);
 	nbr_list->n_matrix[N_PARTICLES*index_p + util].distsq = distsq;
 	nbr_list->n_matrix[N_PARTICLES*index_p + util].index = index_n;
 	nbr_list->utilization[index_p]++;
@@ -164,16 +170,21 @@ void set_neighbors(grid_struc* g, neighbor_struc* nbr_list, vec3* pos, int n_par
 	int p_grid;
 	float search_radius2;
 
-	for (int i=0; i < N_PARTICLES; i++)
+	for (int i=0; i < n_particles; i++)
 	{
 		nbr_list->utilization[i] = 0;
 	}
 
+	//cout << "grid_len: " << g->grid_len << endl;
+
 	search_radius2 = pow(g->grid_len,2);
+
+	cout << "=======New neighbor list!=======" << endl;
+	cout << "search_radius2: " <<  search_radius2 << endl;
 
 	for (int p_index = 0; p_index < n_particles; p_index++)
 	{
-		p_grid = get_grid_index(g,pos[p_index]);
+		p_grid = get_grid_index(g ,pos[p_index]);
 
 		for (int gz = -1; gz <= 1; gz++)
 		{
@@ -188,24 +199,15 @@ void set_neighbors(grid_struc* g, neighbor_struc* nbr_list, vec3* pos, int n_par
 
 					for (int j = 0; j < g->utilization[n_grid]; j++)
 					{
-
 						float distsq;
 						int n_index = g->cell_mem[n_grid*CELL_CAP+j];
-						/*
-						if ((p_index==2) && (n_index==9))
-						{
-							vec3 tmp_vec = pos[p_index]-pos[n_index];
-							distsq = dot(tmp_vec, tmp_vec);
-							("p_index=%d, n_index=%d \t distsq=%f \n", p_index, n_index, distsq);
-							add_neighbor(nbr_list, p_index, n_index, distsq);
-							break;
-						}
-						*/
+
 						vec3 tmp_vec = pos[p_index]-pos[n_index];
 						distsq = dot(tmp_vec, tmp_vec);
 
-						if (distsq<search_radius2)
+						if (p_index != n_index && distsq < 10*search_radius2)
 						{
+							cout << "Pair " << p_index << " " << n_index << " added with distsq=" << distsq << endl;
 							add_neighbor(nbr_list, p_index, n_index, distsq);
 						}
 					}

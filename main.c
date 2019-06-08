@@ -48,13 +48,13 @@ using namespace glm;
 
 // Definition of constants
 #define SMOOTHING_LENGTH 0.05f  // Ein wenig länger als der initiale Teilchenabstand.
-#define SEARCH_RADIUS (1*SMOOTHING_LENGTH)
+#define SEARCH_RADIUS (SMOOTHING_LENGTH)
 #define CUBE_LEN_X 10
 #define CUBE_LEN_Y 10
 #define CUBE_LEN_Z 10
 #define SCAL_LEN 0.1f
 #define N_PARTICLES (CUBE_LEN_X*CUBE_LEN_Y*CUBE_LEN_Z)
-#define TIME_STEP 0.00001f   // TIME_STEP has influence on the stability of the program.
+#define TIME_STEP 0.0001f   // TIME_STEP has influence on the stability of the program.
 #define EPSILON 0.05f
 #define VISCOSITY 0.1f
 #define STIFF 1.0f
@@ -522,7 +522,7 @@ int main(int argc, char** argv)
 			// Render water
 			get_pos(vertexdata, &sph_instance);
 			//cout << "sph_instance->pos[0].x: " << sph_instance.pos[0].x << endl;
-			cout << "vertexdata[0].x: " << vertexdata[0][0] << endl;
+			//cout << "vertexdata[0].x: " << vertexdata[0][0] << endl;
 
 			//glUseProgram(water_shaders);
 			glUseProgram(sprite_shaders);

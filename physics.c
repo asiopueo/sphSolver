@@ -1,6 +1,7 @@
 #include <memory.h>
 #include <math.h>
 #include <assert.h>
+#include <iostream>
 
 #include <stdio.h>  // For debugging only
 
@@ -10,6 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/vec3.hpp>
 using namespace glm;
+using namespace std;
 
 #include "memory.h"
 #include "common.h"
@@ -155,18 +157,19 @@ void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
 
 	for (i = 0; i < sph->n_particles; i++)
 	{
-		vec3 pressure_force, viscosity_force, surface_tension, color_field_gradient;
+		vec3 pressure_force(0.0), viscosity_force(0.0), surface_tension(0.0), color_field_gradient(0.0);
 		float color_field_laplacian;
 
-		for (j = 1; j < nbr_list->utilization[i]; j++)
+		for (j = 0; j < nbr_list->utilization[i]; j++)
 		{
 			int nbr_index;
 			float p_pressure, n_pressure;
 			vec3 vec_r;
 
 			nbr_index = nbr_list->n_matrix[N_PARTICLES*i+j].index;
-
 			vec_r = sph->pos[i] - sph->pos[nbr_index];
+
+			cout << "p: " << i << "\t n: " << j << endl;
 
 			p_pressure = sph->stiff*(sph->density[i] - 0.0f);
 			n_pressure = sph->stiff*(sph->density[nbr_index] - 0.0f);
@@ -185,10 +188,13 @@ void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
 			color_field_laplacian = sph->mass / sph->density[nbr_index] * laplacian_W_poly_6(vec_r,h);
 
 			// Surface tension ('sigma' fehlt)
-			surface_tension = vec3(0.0f);//mat3(-color_field_laplacian/length(color_field_gradient)) * color_field_gradient ;
+			surface_tension = mat3(-color_field_laplacian/length(color_field_gradient)) * color_field_gradient;
+			
+			sph->force[i] += mat3(-0.5e4)*vec_r;
+
 		}
 
-		sph->force[i] = mat3(0.01f)*(pressure_force + mat3(0.001f)*viscosity_force + surface_tension);
+		//sph->force[i] = mat3(1.0) * (pressure_force + mat3(1.0) * viscosity_force + surface_tension);
 	}
 }
 
@@ -200,7 +206,7 @@ void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
 
 vec3 compute_collision(vec3 normal)
 {
-	return mat3(10.0f)*normal;
+	return mat3(1.0f)*normal;
 }
 
 
@@ -275,26 +281,31 @@ void process_collision(sph_struc* sph)
 
 void elapse_water(sph_struc* sph, grid_struc* g, neighbor_struc* nbr_list)
 {
-	alloc_search_grid(g, sph->pos, sph->n_particles, sph->smoothlen);
+	alloc_search_grid(g, sph->pos, sph->n_particles, sph->r_search);
 	set_neighbors(g, nbr_list, sph->pos, sph->n_particles);
 
-	memset(sph->force, 0, sph->n_particles*sizeof(vec3));
-	compute_density(sph, nbr_list);
-
+	memset(sph->force, 0, sph->n_particles * sizeof(vec3));
+	//compute_density(sph, nbr_list);
 	compute_force(sph, nbr_list);
 
-	//for (int i=0; i < sph->n_particles; i++)
-	//	printf("density at particle %d: %f \n",i, sph->density[i]);
+	//process_collision(sph);
+	
+	// Gravity only (debugging):
+	//float scale = 1.0e-12; // for debugging purposes only
+	//vec3 gravity = vec3(0.0, -1e3, 0.0);
+	vec3 gravity = vec3(0.0);
 
-	process_collision(sph);
 
 	// Time integration (Euler method)
-	vec3 gravity = vec3(0.0f, -9.81f, 0.0f);
 	for (int i = 0; i < sph->n_particles; i++)
 	{
-		sph->force[i] += mat3(sph->mass) * gravity;
-		sph->pos[i] += mat3(sph->timestep)*sph->vel[i] + mat3(0.5f*pow(sph->timestep,2)/sph->mass) * sph->force[i];
+		sph->force[i] += sph->mass * gravity;
+		cout << "Force[i].x: " << sph->force[i].x << endl;
+		cout << "Force[i].y: " << sph->force[i].y << endl;
+		cout << "Force[i].z: " << sph->force[i].z << endl;
 		sph->vel[i] += mat3(sph->timestep / sph->mass) * sph->force[i];
+		sph->pos[i] += mat3(sph->timestep)*sph->vel[i];// + scale * mat3(0.5f*pow(sph->timestep, 2)/sph->mass) * sph->force[i];
+		
 	}
 }
 
