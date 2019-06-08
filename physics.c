@@ -169,7 +169,7 @@ void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
 			nbr_index = nbr_list->n_matrix[N_PARTICLES*i+j].index;
 			vec_r = sph->pos[i] - sph->pos[nbr_index];
 
-			cout << "p: " << i << "\t n: " << j << endl;
+			//cout << "p: " << i << "\t n: " << j << endl;
 
 			p_pressure = sph->stiff*(sph->density[i] - 0.0f);
 			n_pressure = sph->stiff*(sph->density[nbr_index] - 0.0f);
@@ -220,8 +220,8 @@ void process_collision(sph_struc* sph)
 	
 	for (i = 0; i < sph->n_particles; i++)
 	{
-		float edge_length = 0.5f; 	// half-length of box
-		mat3 wall_parameter = mat3(1.0f);
+		float edge_length = 1.0; 	// half-length of box: 0.5
+		mat3 wall_parameter = mat3(1.0e3);
 
 		vec3 pos_pred = sph->pos[i] + sph->timestep * sph->vel[i];
 
@@ -288,7 +288,7 @@ void elapse_water(sph_struc* sph, grid_struc* g, neighbor_struc* nbr_list)
 	//compute_density(sph, nbr_list);
 	compute_force(sph, nbr_list);
 
-	//process_collision(sph);
+	process_collision(sph);
 	
 	// Gravity only (debugging):
 	//float scale = 1.0e-12; // for debugging purposes only
@@ -300,9 +300,9 @@ void elapse_water(sph_struc* sph, grid_struc* g, neighbor_struc* nbr_list)
 	for (int i = 0; i < sph->n_particles; i++)
 	{
 		sph->force[i] += sph->mass * gravity;
-		cout << "Force[i].x: " << sph->force[i].x << endl;
+		/*cout << "Force[i].x: " << sph->force[i].x << endl;
 		cout << "Force[i].y: " << sph->force[i].y << endl;
-		cout << "Force[i].z: " << sph->force[i].z << endl;
+		cout << "Force[i].z: " << sph->force[i].z << endl;*/
 		sph->vel[i] += mat3(sph->timestep / sph->mass) * sph->force[i];
 		sph->pos[i] += mat3(sph->timestep)*sph->vel[i];// + scale * mat3(0.5f*pow(sph->timestep, 2)/sph->mass) * sph->force[i];
 		

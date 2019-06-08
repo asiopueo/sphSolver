@@ -521,8 +521,6 @@ int main(int argc, char** argv)
 
 			// Render water
 			get_pos(vertexdata, &sph_instance);
-			//cout << "sph_instance->pos[0].x: " << sph_instance.pos[0].x << endl;
-			//cout << "vertexdata[0].x: " << vertexdata[0][0] << endl;
 
 			//glUseProgram(water_shaders);
 			glUseProgram(sprite_shaders);
@@ -532,7 +530,7 @@ int main(int argc, char** argv)
 			glBindVertexArray(waterVAO);
 				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO); // This was the culprit!
 				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec3) * sph_instance.n_particles, &vertexdata[0][0]);
-				glDrawArrays(GL_POINTS, 0, sph_instance.n_particles);
+				glDrawArrays(GL_TRIANGLES, 0, sph_instance.n_particles);
 			glBindVertexArray(0);
 
 			// Render water by using the maching cubes algorithm

@@ -179,8 +179,8 @@ void set_neighbors(grid_struc* g, neighbor_struc* nbr_list, vec3* pos, int n_par
 
 	search_radius2 = pow(g->grid_len,2);
 
-	cout << "=======New neighbor list!=======" << endl;
-	cout << "search_radius2: " <<  search_radius2 << endl;
+	//cout << "=======New neighbor list!=======" << endl;
+	//cout << "search_radius2: " <<  search_radius2 << endl;
 
 	for (int p_index = 0; p_index < n_particles; p_index++)
 	{
@@ -207,7 +207,7 @@ void set_neighbors(grid_struc* g, neighbor_struc* nbr_list, vec3* pos, int n_par
 
 						if (p_index != n_index && distsq < 10*search_radius2)
 						{
-							cout << "Pair " << p_index << " " << n_index << " added with distsq=" << distsq << endl;
+							//cout << "Pair " << p_index << " " << n_index << " added with distsq=" << distsq << endl;
 							add_neighbor(nbr_list, p_index, n_index, distsq);
 						}
 					}
