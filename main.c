@@ -54,7 +54,7 @@ using namespace glm;
 #define CUBE_LEN_Z 10
 #define SCAL_LEN 0.1f
 #define N_PARTICLES (CUBE_LEN_X*CUBE_LEN_Y*CUBE_LEN_Z)
-#define TIME_STEP 0.001f   // TIME_STEP has influence on the stability of the program.
+#define TIME_STEP 0.00001f   // TIME_STEP has influence on the stability of the program.
 #define EPSILON 0.05f
 #define VISCOSITY 0.1f
 #define STIFF 1.0f
@@ -435,8 +435,8 @@ int main(int argc, char** argv)
 	init_sph();
 	create_nbr_list(&nbr_list);
 
-	vertexdata = new vec3[N_PARTICLES];
-	get_pos(vertexdata,&sph_instance);
+	vertexdata = new vec3[sph_instance.n_particles];
+	get_pos(vertexdata, &sph_instance);
 
 
 
@@ -487,8 +487,8 @@ int main(int argc, char** argv)
 	int nbFrames = 0;
 	char fps[10];
 
-	do
-		{
+
+	do {
 			compute_matrices_from_inputs();
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -511,7 +511,7 @@ int main(int argc, char** argv)
 			// Triangle
 			glUseProgram(triangle_shaders);
 			glUniformMatrix4fv(MVP_ID, 1, GL_FALSE, &MVP_matrix[0][0]);
-			ModelMatrix = rotate(mat4(1.0f), GLfloat(CurrentTime),vec3(0.0f,1.0f,0.0f));
+			ModelMatrix = rotate(mat4(1.0f), GLfloat(CurrentTime),vec3(1.0f,1.0f,0.0f));
 			ViewMatrix = lookAt(Position, Position + DiVector, UpVector);
 			MVP_matrix = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
@@ -520,7 +520,9 @@ int main(int argc, char** argv)
 			glBindVertexArray(0);
 
 			// Render water
-			get_pos(vertexdata,&sph_instance);
+			get_pos(vertexdata, &sph_instance);
+			//cout << "sph_instance->pos[0].x: " << sph_instance.pos[0].x << endl;
+			cout << "vertexdata[0].x: " << vertexdata[0][0] << endl;
 
 			//glUseProgram(water_shaders);
 			glUseProgram(sprite_shaders);
@@ -528,14 +530,15 @@ int main(int argc, char** argv)
 			glUniformMatrix4fv(ProjectionMatrix_ID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
 			glBindVertexArray(waterVAO);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * sph_instance.n_particles, &vertexdata[0][0], GL_STATIC_DRAW);
+				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO); // This was the culprit!
+				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec3) * sph_instance.n_particles, &vertexdata[0][0]);
 				glDrawArrays(GL_POINTS, 0, sph_instance.n_particles);
 			glBindVertexArray(0);
 
 			// Render water by using the maching cubes algorithm
 			//renderMarchingCubes(&(render_instance.implicit_vol), 0, render_instance.vol_width, 0, render_instance.vol_height, 0, render_instance.vol_depth, ISO_THRESHOLD);
 
-			//elapse();
+			elapse();
 
 			// Text rendering (experimental)
 			float sx = 2.0 / 1024;	// Needs to be changed later.
