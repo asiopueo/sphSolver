@@ -453,8 +453,8 @@ int main(int argc, char** argv)
 	gridcell cell;
 	get_cellvertices(cell, density, 1., edge+2, edge+2, 2, 2, 1);
 
-	for (int i=0; i<8; i++)
-		cout << cell.v[i].density << endl;
+	//for (int i=0; i<8; i++)
+	//	cout << cell.v[i].density << endl;
 
 	// Marching cubes here:
 	std::vector<vec3> vertexdata;
@@ -464,7 +464,8 @@ int main(int argc, char** argv)
 
 	cout << "Size: " << vertexdata.size() << endl;
 
-	for (auto it = std::begin(vertexdata); it != std::end(vertexdata); ++it)
+	//for (auto it = std::begin(vertexdata); it != std::end(vertexdata); ++it)
+	for (auto it = std::begin(normaldata); it != std::end(normaldata); ++it)
 	{
 		cout << it->x << endl;
 		cout << it->y << endl;
@@ -474,18 +475,27 @@ int main(int argc, char** argv)
 
 	// Initialize Water
 	GLuint sprite_shaders = LoadShaders("shaders/water_sprites.vs", "shaders/water_sprites.fs");
-	//GLuint water_shaders = LoadShaders("shaders/water_refrac.vs", "shaders/water_refrac.fs");
+	GLuint water_shaders = LoadShaders("shaders/water_refrac.vs", "shaders/water_refrac.fs");
 
-	GLuint waterVAO, water_vertexVBO;
+	GLuint waterVAO, water_vertexVBO, water_normalVBO;
 	glGenVertexArrays(1, &waterVAO);
 
 	glBindVertexArray(waterVAO);
-		glGenBuffers(1,&water_vertexVBO);
+		glGenBuffers(1, &water_vertexVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertexdata.size(), &vertexdata[0][0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,0);
+
+		glGenBuffers(1, &water_normalVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_STATIC_DRAW);
+		
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindVertexArray(0);
+
+
 
 
 	// Initialize Camera
@@ -500,6 +510,7 @@ int main(int argc, char** argv)
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 100.0f);
 
 	// Get uniform locations
+	GLuint ModelMatrix_ID = glGetUniformLocation(water_shaders, "ModelMatrix");
 	GLuint ViewMatrix_ID = glGetUniformLocation(skybox_shaders, "ViewMatrix");
 	GLuint ProjectionMatrix_ID = glGetUniformLocation(skybox_shaders, "ProjectionMatrix");
 	GLuint MVP_ID = glGetUniformLocation(triangle_shaders, "MVP_matrix");
@@ -551,17 +562,16 @@ int main(int argc, char** argv)
 			// Render water
 			//get_pos(vertexdata, &sph_instance);
 
-			//glUseProgram(water_shaders);
-			glUseProgram(sprite_shaders);
-			glUniformMatrix4fv(ViewMatrix_ID, 1, GL_FALSE, &ViewMatrix[0][0]);
-			glUniformMatrix4fv(ProjectionMatrix_ID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
-
-
+			glUseProgram(water_shaders);
+			//glUseProgram(sprite_shaders);
+			ModelMatrix = mat4(1.0f);
+			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ModelMatrix"), 1, GL_FALSE, &ModelMatrix[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
+			glUniform3fv(glGetUniformLocation(water_shaders, "cameraPos"), 1, &Position[0]);
 
 			glBindVertexArray(waterVAO);
-				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO); // This was the culprit!
-				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec3) * vertexdata.size(), &vertexdata[0][0]);
-				glDrawArrays(GL_TRIANGLES, 0, sizeof(vec3)* vertexdata.size());
+				glDrawArrays(GL_TRIANGLES, 0, sizeof(vec3) * vertexdata.size());
 			glBindVertexArray(0);
 
 
