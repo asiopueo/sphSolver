@@ -449,28 +449,23 @@ int main(int argc, char** argv)
 				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 0.5+RANDF();
 
 
-
-	gridcell cell;
-	get_cellvertices(cell, density, 1., edge+2, edge+2, 2, 2, 1);
-
-	//for (int i=0; i<8; i++)
-	//	cout << cell.v[i].density << endl;
-
-	// Marching cubes here:
 	std::vector<vec3> vertexdata;
 	std::vector<vec3> normaldata;
-	polygonize_cell(&cell, vertexdata, normaldata, 0.5);
-	//vertexdata.push_back(vec3(0.0));
+
+	gridcell cell;
+
+	for (int i=1; i<edge+1; i++)
+		for (int j=1; j<edge+1; j++)
+			for (int k=1; k<edge+1; k++) {
+				get_cellvertices(cell, density, 1., edge+2, edge+2, i, j, k);
+				polygonize_cell(&cell, vertexdata, normaldata, 0.5);
+			}
 
 	cout << "Size: " << vertexdata.size() << endl;
 
-	//for (auto it = std::begin(vertexdata); it != std::end(vertexdata); ++it)
-	for (auto it = std::begin(normaldata); it != std::end(normaldata); ++it)
-	{
-		cout << it->x << endl;
-		cout << it->y << endl;
-		cout << it->z << endl;
-	}
+
+
+
 
 
 	// Initialize Water
