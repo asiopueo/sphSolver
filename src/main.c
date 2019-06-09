@@ -36,15 +36,21 @@ using namespace glm;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+
+#include <vector>
+
+
 // Project-specific includes
 #include "memory.h"
 #include "common.h"
 #include "physics.h"
 #include "loader.h"
-//#include "marchingcubes.h"
+#include "marchingcubes.h"
 
 // Model data
 #include "modeldata.h"
+
+
 
 // Definition of constants
 #define SMOOTHING_LENGTH 0.05f  // Ein wenig länger als der initiale Teilchenabstand.
@@ -101,6 +107,7 @@ grid_struc grid_instance;
 neighbor_struc nbr_list;
 //render_struc render_instance;
 vec3* vertexdata;
+vec3* normaldata;
 
 // Texture
 GLuint cubemap_tex;
@@ -332,12 +339,6 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	// Why are these lines screwing around ?!?
-	//glfwWindowHint(GLFW_SAMPLES, 4);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
 	// Open a window and create its OpenGL context
 	window = glfwCreateWindow( 1024, 768, "SPH Sloshing Simulator", NULL, NULL);
 	if( window == NULL ){
@@ -427,19 +428,48 @@ int main(int argc, char** argv)
 
 
 
-
-
-
-
 	// Initialize simulation
-	init_sph();
-	create_nbr_list(&nbr_list);
-
-	vertexdata = new vec3[sph_instance.n_particles];
-	get_pos(vertexdata, &sph_instance);
+	//init_sph();
+	//create_nbr_list(&nbr_list);
 
 
 
+	// Create density grid:
+	int edge = 10;
+	float density[(edge+2)*(edge+2)*(edge+2)];
+	//gridcell* density_grid[(edge+2)*(edge+2)*(edge+2)];
+
+	for (int i=0; i<(edge+2)*(edge+2)*(edge+2); i++)
+		density[i] = 0.0;
+
+	// Initialize values:
+	for (int i=2; i<edge; i++)
+		for (int j=2; j<edge; j++)
+			for (int k=2; k<edge; k++)
+				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 0.5+RANDF();
+
+
+
+	gridcell cell;
+	get_cellvertices(cell, density, 1., edge+2, edge+2, 2, 2, 1);
+
+	for (int i=0; i<8; i++)
+		cout << cell.v[i].density << endl;
+
+	// Marching cubes here:
+	std::vector<vec3> vertexdata;
+	std::vector<vec3> normaldata;
+	polygonize_cell(&cell, vertexdata, normaldata, 0.5);
+	//vertexdata.push_back(vec3(0.0));
+
+	cout << "Size: " << vertexdata.size() << endl;
+
+	for (auto it = std::begin(vertexdata); it != std::end(vertexdata); ++it)
+	{
+		cout << it->x << endl;
+		cout << it->y << endl;
+		cout << it->z << endl;
+	}
 
 
 	// Initialize Water
@@ -452,7 +482,7 @@ int main(int argc, char** argv)
 	glBindVertexArray(waterVAO);
 		glGenBuffers(1,&water_vertexVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * sph_instance.n_particles, &vertexdata[0][0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertexdata.size(), &vertexdata[0][0], GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,0);
 	glBindVertexArray(0);
@@ -485,12 +515,11 @@ int main(int argc, char** argv)
 	double lastTime = 0.0f;
 	double currentTime;
 	int nbFrames = 0;
-	char fps[10];
+	char fps[30];
 
 
 	do {
 			compute_matrices_from_inputs();
-
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Skybox
@@ -520,28 +549,43 @@ int main(int argc, char** argv)
 			glBindVertexArray(0);
 
 			// Render water
-			get_pos(vertexdata, &sph_instance);
+			//get_pos(vertexdata, &sph_instance);
 
 			//glUseProgram(water_shaders);
 			glUseProgram(sprite_shaders);
 			glUniformMatrix4fv(ViewMatrix_ID, 1, GL_FALSE, &ViewMatrix[0][0]);
 			glUniformMatrix4fv(ProjectionMatrix_ID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
+
+
 			glBindVertexArray(waterVAO);
 				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO); // This was the culprit!
-				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec3) * sph_instance.n_particles, &vertexdata[0][0]);
-				glDrawArrays(GL_TRIANGLES, 0, sph_instance.n_particles);
+				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec3) * vertexdata.size(), &vertexdata[0][0]);
+				glDrawArrays(GL_TRIANGLES, 0, sizeof(vec3)* vertexdata.size());
 			glBindVertexArray(0);
 
-			// Render water by using the maching cubes algorithm
-			//renderMarchingCubes(&(render_instance.implicit_vol), 0, render_instance.vol_width, 0, render_instance.vol_height, 0, render_instance.vol_depth, ISO_THRESHOLD);
 
-			elapse();
+
+
+
+
+
+
+			// Render water by using the maching cubes algorithm
+			//renderMarchingCubes(, ISO_THRESHOLD);
+
+
+
+
+
+
+
+
+
 
 			// Text rendering (experimental)
 			float sx = 2.0 / 1024;	// Needs to be changed later.
 			float sy = 2.0 / 768;
-			
 			
 			render_text(freetype_shaders, "Bubo 2000", -1 + 24 * sx,   1 - 50 * sy,    sx, sy);
 

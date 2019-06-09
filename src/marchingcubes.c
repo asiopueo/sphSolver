@@ -9,18 +9,19 @@
 #include <glm/glm.hpp>
 using namespace glm;
 
+#include <vector>
 
 #include "memory.h"
 #include "common.h"
 #include "physics.h"
 #include "marchingcubes.h"
 
-
-
 #define SWAP_V(x, y) {cellvertex* v = y; y = x; x = v;}
 
 #define EPSILON 0.00001f
 
+#include <iostream>
+using namespace std;
 
 
 int edgeTable[256] = {
@@ -318,17 +319,16 @@ int triTable[256][16] = {
 };
 
 
-int get_rendergrid_index(int i, int j, int k)
+/*int get_rende cell_index(int i, int j, int k)
 {
 	int v_index;
 
 	v_index = i + j * r->width_y + k * r->width_y * r->width_z;
 
 	return v_index;
-}
+}*/
 
-
-void create_density_stamp()
+/*void create_density_stamp()
 {
 	r->stamp = (float*) calloc(width*width*width);
 
@@ -430,7 +430,7 @@ void create_implicit(render_data* r, sph_struc* sph, vec3* pos)
 		{
 			for (gz=-stamp_width; gz <= stamp_width; gz++)
 			{
-				v_index = get_rendergrid_index(gx,gy,gz);
+				v_index = get_rende cell_index(gx,gy,gz);
 				density[v_index] += density_stamp( );
 			}
 		}
@@ -445,69 +445,69 @@ void create_implicit(render_data* r, sph_struc* sph, vec3* pos)
 	{
 		printf("Density in voxel %d: %f. \n", i, r->density[i]);
 	}
-}
+}*/
 
 
 
 
 // Linear interpolation
-void interpolate(vec3* vertex, vec3* normal, cellvertex* v0, cellvertex* v1, GLfloat isolevel)
+void interpolate(vec3 &vertex, vec3 &normal, cellvertex &v0, cellvertex &v1, GLfloat isolevel)
 {
 	GLfloat alpha;
 	GLfloat mag;
 	GLfloat inv_mag;
 
-	if (ABS(isolevel - v0->value) < EPSILON)
+	if (fabsf(isolevel - v0.density) < EPSILON)
 	{
-		*normal = v0->normal;
-		*vertex = v0->vertex;
+		normal = v0.normal;
+		vertex = v0.vertex;
 		return;
 	}
 	
-	if (ABS(isolevel - v1->value) < EPSILON)
+	if (fabsf(isolevel - v1.density) < EPSILON)
 	{
-		*normal = v1->normal;
-		*vertex = v1->vertex;
+		normal = v1.normal;
+		vertex = v1.vertex;
 		return;
 	}
 	
-	if (ABS(v0->value - v1->value) < EPSILON)
+	if (fabs(v0.density - v1.density) < EPSILON)
 	{
-		*normal = v0->normal;
-		*vertex = v0->vertex;
+		normal = v0.normal;
+		vertex = v0.vertex;
 		return;
 	}
 
-	alpha = (isolevel - v0->value) / (v1->value - v0->value);
+	alpha = (isolevel - v0.density) / (v1.density - v0.density);
 
-	vertex->x = v0->vertex.x + alpha * (v1->vertex.x - v0->vertex.x);
-	vertex->y = v0->vertex.y + alpha * (v1->vertex.y - v0->vertex.y);
-	vertex->z = v0->vertex.z + alpha * (v1->vertex.z - v0->vertex.z);
+	vertex.x = v0.vertex.x + alpha * (v1.vertex.x - v0.vertex.x);
+	vertex.y = v0.vertex.y + alpha * (v1.vertex.y - v0.vertex.y);
+	vertex.z = v0.vertex.z + alpha * (v1.vertex.z - v0.vertex.z);
 
 
-	normal->x = v0->normal.x + alpha * (v1->normal.x - v0->normal.x);
-	normal->y = v0->normal.y + alpha * (v1->normal.y - v0->normal.y);
-	normal->z = v0->normal.z + alpha * (v1->normal.z - v0->normal.z);
+	normal.x = v0.normal.x + alpha * (v1.normal.x - v0.normal.x);
+	normal.y = v0.normal.y + alpha * (v1.normal.y - v0.normal.y);
+	normal.z = v0.normal.z + alpha * (v1.normal.z - v0.normal.z);
 
-	mag = glm::sqrt(normal->x * normal->x + normal->y * normal->y + normal->z * normal->z);
+	mag = glm::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
 	inv_mag = 1.0f/mag;
 
 	// Normalization of the interpolated normal
-	normal->x *= inv_mag;
-	normal->y *= inv_mag;
-	normal->z *= inv_mag;
+	normal.x *= inv_mag;
+	normal.y *= inv_mag;
+	normal.z *= inv_mag;
 
-	if (normal->z > (0.9f))
+	if (normal.z > (0.9f))
 	{
-		normal->x = 0.0f;
-		normal->y = 0.0f;
-		normal->z = 1.0f;
+		normal.x = 0.0f;
+		normal.y = 0.0f;
+		normal.z = 1.0f;
 	}
 }
 
 
-
-void polygonize(gridcell* grid, vec3* vertex_data, vec3* normal_data, float isolevel)
+// Polygonize one density cell (consisting of 8 points)
+void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector<vec3> &normal_data, float isolevel)
 {
 	vec3 vertlist[12];
 	vec3 normlist[12];
@@ -515,55 +515,57 @@ void polygonize(gridcell* grid, vec3* vertex_data, vec3* normal_data, float isol
 	int cubeindex = 0;
 	int edgeFlags = 0;
 
-	if (grid->v[0]->value < isolevel) cubeindex |= 1;	// '|=' Bitwise inclusive "OR" and "assignment" operator.
-	if (grid->v[1]->value < isolevel) cubeindex |= 2;
-	if (grid->v[2]->value < isolevel) cubeindex |= 4;
-	if (grid->v[3]->value < isolevel) cubeindex |= 8;
-	if (grid->v[4]->value < isolevel) cubeindex |= 16;
-	if (grid->v[5]->value < isolevel) cubeindex |= 32;
-	if (grid->v[6]->value < isolevel) cubeindex |= 64;
-	if (grid->v[7]->value < isolevel) cubeindex |= 128;
+	if (cell->v[0].density < isolevel) cubeindex |= 1;	// '|=' Bitwise inclusive "OR" and "assignment" operator.
+	if (cell->v[1].density < isolevel) cubeindex |= 2;
+	if (cell->v[2].density < isolevel) cubeindex |= 4;
+	if (cell->v[3].density < isolevel) cubeindex |= 8;
+	if (cell->v[4].density < isolevel) cubeindex |= 16;
+	if (cell->v[5].density < isolevel) cubeindex |= 32;
+	if (cell->v[6].density < isolevel) cubeindex |= 64;
+	if (cell->v[7].density < isolevel) cubeindex |= 128;
 
 	edgeFlags = edgeTable[cubeindex];
+
+	//cout << "edgeFlags" << edgeFlags << endl;
 
 	if (edgeFlags == 0)
 		return;
 
 	if (edgeFlags & 1)
-		interpolate(&vertlist[0], &normlist[0], grid->v[0], grid->v[1], isolevel);
+		interpolate(vertlist[0], normlist[0], cell->v[0], cell->v[1], isolevel);
 
 	if (edgeFlags & 2)
-		interpolate(&vertlist[1], &normlist[1], grid->v[1], grid->v[2], isolevel);
+		interpolate(vertlist[1], normlist[1], cell->v[1], cell->v[2], isolevel);
 
 	if (edgeFlags & 4)
-		interpolate(&vertlist[2], &normlist[2], grid->v[2], grid->v[3], isolevel);
+		interpolate(vertlist[2], normlist[2], cell->v[2], cell->v[3], isolevel);
 
 	if (edgeFlags & 8)
-		interpolate(&vertlist[3], &normlist[3], grid->v[3], grid->v[0], isolevel);
+		interpolate(vertlist[3], normlist[3], cell->v[3], cell->v[0], isolevel);
 
 	if (edgeFlags & 16)
-		interpolate(&vertlist[4], &normlist[4], grid->v[4], grid->v[5], isolevel);
+		interpolate(vertlist[4], normlist[4], cell->v[4], cell->v[5], isolevel);
 
 	if (edgeFlags & 32)
-		interpolate(&vertlist[5], &normlist[5], grid->v[5], grid->v[6], isolevel);
+		interpolate(vertlist[5], normlist[5], cell->v[5], cell->v[6], isolevel);
 
 	if (edgeFlags & 64)
-		interpolate(&vertlist[6], &normlist[6], grid->v[6], grid->v[7], isolevel);
+		interpolate(vertlist[6], normlist[6], cell->v[6], cell->v[7], isolevel);
 
 	if (edgeFlags & 128)
-		interpolate(&vertlist[7], &normlist[7], grid->v[7], grid->v[4], isolevel);
+		interpolate(vertlist[7], normlist[7], cell->v[7], cell->v[4], isolevel);
 
 	if (edgeFlags & 256)
-		interpolate(&vertlist[8], &normlist[8], grid->v[0], grid->v[4], isolevel);
+		interpolate(vertlist[8], normlist[8], cell->v[0], cell->v[4], isolevel);
 
 	if (edgeFlags & 512)
-		interpolate(&vertlist[9], &normlist[9], grid->v[1], grid->v[5], isolevel);
+		interpolate(vertlist[9], normlist[9], cell->v[1], cell->v[5], isolevel);
 
 	if (edgeFlags & 1024)
-		interpolate(&vertlist[10], &normlist[10], grid->v[2], grid->v[6], isolevel);
+		interpolate(vertlist[10], normlist[10], cell->v[2], cell->v[6], isolevel);
 
 	if (edgeFlags & 2048)
-		interpolate(&vertlist[11], &normlist[11], grid->v[3], grid->v[7], isolevel);
+		interpolate(vertlist[11], normlist[11], cell->v[3], cell->v[7], isolevel);
 
 
 	for (i = 0; triTable[cubeindex][i] != -1; i += 3)
@@ -580,24 +582,30 @@ void polygonize(gridcell* grid, vec3* vertex_data, vec3* normal_data, float isol
 }
 
 
-void set_cellvertex(cellvertex* v, 
+void get_cellvertices(gridcell& cell, 
 					GLfloat* density, GLfloat stride,
 					GLuint width, GLuint height,
 					GLuint xn, GLuint yn, GLuint zn)
 {
-	GLuint wh = width*height;
-	GLuint base = xn + yn*width + zn*width*height;
+	for (int i=0; i<2; i++)
+		for (int j=0; j<2; j++)
+			for (int k=0; k<2; k++)
+			{
+				int base = (xn +i) + (yn+j)*width + (zn+k)*width*height;
+				int index = i + 2*j + 4*k;
+				// Calculate gradients at the cellvertex
+				cell.v[index].normal.x = -(density[base + (i+1)] - density[base + (i-1)]);
+				cell.v[index].normal.y = -(density[base + (j+1)*width] - density[base - (j-1)*width]);
+				cell.v[index].normal.z = -(density[base + (k+1)*width*height] - density[base - (k-1)*width*height]);
 
-	// Calculate gradients at the cellvertex
-	v->normal.x = -(density[base + 1] - density[base - 1]);
-	v->normal.y = -(density[base + width] - density[base - width]);
-	v->normal.z = -(density[base + wh] - density[base - wh]);
-
-	v->value = density[base];
-	v->vertex.x = xn*stride;
-	v->vertex.y = yn*stride;
-	v->vertex.z = zn*stride;
+				cell.v[index].density = density[base];
+				cell.v[index].vertex.x = (xn+i) * stride;
+				cell.v[index].vertex.y = (yn+j) * stride;
+				cell.v[index].vertex.z = (zn+k) * stride;
+			}
 }
+
+
 
 int clamp(int min, int x, int max)
 {
@@ -608,7 +616,7 @@ int clamp(int min, int x, int max)
 	return x;
 }
 
-void render_MarchingCubes(implicit_surface* v, float threshold)
+/*void render_MarchingCubes(implicit_surface* v, float threshold)
 {
 	std::vector<vec3> water_vertex_data;
 	std::vector<vec3> water_normal_data;
@@ -663,5 +671,5 @@ void render_MarchingCubes(implicit_surface* v, float threshold)
 		glDrawArrays(GL_TRIANGLES, 0, water_vertex_data.size()*3);
 	glBindVertexArray(0);
 
-}
+}*/
 

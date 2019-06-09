@@ -190,7 +190,7 @@ void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
 			// Surface tension ('sigma' fehlt)
 			surface_tension = mat3(-color_field_laplacian/length(color_field_gradient)) * color_field_gradient;
 			
-			sph->force[i] += mat3(-0.5e4)*vec_r;
+			sph->force[i] -= mat3(-0.5e4)*vec_r; // experiment with the plus or minus-sign
 
 		}
 
