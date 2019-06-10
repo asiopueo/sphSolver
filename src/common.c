@@ -94,11 +94,11 @@ void alloc_search_grid(grid_struc* g, vec3* pos, int n_particles, float grid_len
 
 	//cout << "N_cells: " << g->N_cells << endl;
 
-	if (g->N_cells > 50000)
+	/*if (g->N_cells > 500000)
 	{
 		printf("Abort: N_cells = %d \n", g->N_cells);
 		//exit(0);
-	}
+	}*/
 
 	if (g->cell_mem != NULL)
 	{

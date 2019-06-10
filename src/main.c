@@ -46,6 +46,7 @@ using namespace glm;
 #include "physics.h"
 #include "loader.h"
 #include "marchingcubes.h"
+#include "density.h"
 
 // Model data
 #include "modeldata.h"
