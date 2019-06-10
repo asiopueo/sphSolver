@@ -430,9 +430,6 @@ int main(int argc, char** argv)
 
 
 
-	// Initialize simulation
-	init_sph();
-	create_nbr_list(&nbr_list);
 
 
 	// Create density grid:
@@ -468,14 +465,8 @@ int main(int argc, char** argv)
 
 
 
-	// Density grid allocation:
-	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
-
-
-
-
 	// Initialize Water
-	//GLuint sprite_shaders = LoadShaders("shaders/water_sprites.vs", "shaders/water_sprites.fs");
+	GLuint sprite_shaders = LoadShaders("shaders/water_sprites.vs", "shaders/water_sprites.fs");
 	GLuint water_shaders = LoadShaders("shaders/water_refrac.vs", "shaders/water_refrac.fs");
 
 	GLuint waterVAO, water_vertexVBO, water_normalVBO;
@@ -499,6 +490,30 @@ int main(int argc, char** argv)
 
 
 
+
+
+	// Initialize simulation
+	init_sph();
+	create_nbr_list(&nbr_list);
+	// Density grid allocation:
+	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
+
+	vec3 spritedata[sph_instance.n_particles];
+	
+	GLuint spriteVAO, sprite_vertexVBO;
+	glGenVertexArrays(1, &spriteVAO);
+	glBindVertexArray(spriteVAO);
+		glGenBuffers(1, &sprite_vertexVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, sprite_vertexVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0], GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindVertexArray(0);
+
+
+
+
+
 	// Initialize Camera
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 10.0f);
 	Position = vec3(0.0f, 0.0f, 0.0f);
@@ -511,7 +526,7 @@ int main(int argc, char** argv)
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 100.0f);
 
 	// Get uniform locations
-	//GLuint ModelMatrix_ID = glGetUniformLocation(water_shaders, "ModelMatrix");
+	// GLuint ModelMatrix_ID = glGetUniformLocation(water_shaders, "ModelMatrix");
 	GLuint ViewMatrix_ID = glGetUniformLocation(skybox_shaders, "ViewMatrix");
 	GLuint ProjectionMatrix_ID = glGetUniformLocation(skybox_shaders, "ProjectionMatrix");
 	GLuint MVP_ID = glGetUniformLocation(triangle_shaders, "MVP_matrix");
@@ -561,16 +576,10 @@ int main(int argc, char** argv)
 			glBindVertexArray(0);
 
 
-			elapse();
-			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
-
 
 
 			// Render water
-			//get_pos(vertexdata, &sph_instance);
-
 			glUseProgram(water_shaders);
-			//glUseProgram(sprite_shaders);
 			ModelMatrix = mat4(1.0f);
 			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ModelMatrix"), 1, GL_FALSE, &ModelMatrix[0][0]);
 			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
@@ -583,13 +592,21 @@ int main(int argc, char** argv)
 
 
 
+			elapse();
+			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
+			get_pos(spritedata, &sph_instance);
 
+			// Sprites
+			glUseProgram(sprite_shaders);
+			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
+			glUniform3fv(glGetUniformLocation(sprite_shaders, "cameraPos"), 1, &Position[0]);
 
-
-
-
-			// Render water by using the maching cubes algorithm
-			//renderMarchingCubes(, ISO_THRESHOLD);
+			glBindVertexArray(spriteVAO);
+				glBindBuffer(GL_ARRAY_BUFFER, sprite_vertexVBO);
+				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0]);
+				glDrawArrays(GL_POINTS, 0, sizeof(vec3) * sph_instance.n_particles);
+			glBindVertexArray(0);
 
 
 
