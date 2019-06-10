@@ -16,9 +16,9 @@ using namespace glm;
 #include "physics.h"
 #include "marchingcubes.h"
 
-#define SWAP_V(x, y) {cellvertex* v = y; y = x; x = v;}
+#define SWAP_V(x, y) {vec3 v = y; y = x; x = v;}
 
-#define EPSILON 0.00001f
+#define EPSILON 1.0e-4
 
 #include <iostream>
 using namespace std;
@@ -471,7 +471,7 @@ void interpolate(vec3 &vertex, vec3 &normal, cellvertex &v0, cellvertex &v1, GLf
 		return;
 	}
 	
-	if (fabs(v0.density - v1.density) < EPSILON)
+	if (fabsf(v0.density - v1.density) < EPSILON)
 	{
 		normal = v0.normal;
 		vertex = v0.vertex;
@@ -479,30 +479,28 @@ void interpolate(vec3 &vertex, vec3 &normal, cellvertex &v0, cellvertex &v1, GLf
 	}
 
 	alpha = (isolevel - v0.density) / (v1.density - v0.density);
+	alpha = 0.5;
 
 	vertex.x = v0.vertex.x + alpha * (v1.vertex.x - v0.vertex.x);
 	vertex.y = v0.vertex.y + alpha * (v1.vertex.y - v0.vertex.y);
 	vertex.z = v0.vertex.z + alpha * (v1.vertex.z - v0.vertex.z);
 
-
 	normal.x = v0.normal.x + alpha * (v1.normal.x - v0.normal.x);
 	normal.y = v0.normal.y + alpha * (v1.normal.y - v0.normal.y);
 	normal.z = v0.normal.z + alpha * (v1.normal.z - v0.normal.z);
 
-	mag = glm::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+	mag = glm::length(normal);
 	inv_mag = 1.0f/mag;
 
 	// Normalization of the interpolated normal
-	normal.x *= inv_mag;
-	normal.y *= inv_mag;
-	normal.z *= inv_mag;
+	normal = glm::mat3(inv_mag)*normal;
 
-	if (normal.z > (0.9f))
+	/*if (normal.z > (0.9f))
 	{
 		normal.x = 0.0f;
 		normal.y = 0.0f;
 		normal.z = 1.0f;
-	}
+	}*/
 }
 
 
@@ -525,8 +523,6 @@ void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector
 	if (cell->v[7].density < isolevel) cubeindex |= 128;
 
 	edgeFlags = edgeTable[cubeindex];
-
-	//cout << "edgeFlags" << edgeFlags << endl;
 
 	if (edgeFlags == 0)
 		return;
@@ -568,6 +564,7 @@ void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector
 		interpolate(vertlist[11], normlist[11], cell->v[3], cell->v[7], isolevel);
 
 
+
 	for (i = 0; triTable[cubeindex][i] != -1; i += 3)
 	{
 		// Hier muessen die VBOs befüllt werden.  Wie ist die Reihenfolge der Daten bei 'push_back'?
@@ -587,22 +584,26 @@ void get_cellvertices(gridcell& cell,
 					GLuint width, GLuint height,
 					GLuint xn, GLuint yn, GLuint zn)
 {
-	for (int i=0; i<2; i++)
-		for (int j=0; j<2; j++)
+	for (int i=0; i<2; i++) {
+		for (int j=0; j<2; j++) {
 			for (int k=0; k<2; k++)
 			{
-				int base = (xn +i) + (yn+j)*width + (zn+k)*width*height;
+				int base = (xn+i) + (yn+j)*width + (zn+k)*width*height;
 				int index = i + 2*j + 4*k;
 				// Calculate gradients at the cellvertex
-				cell.v[index].normal.x = -(density[base + (i+1)] - density[base + (i-1)]);
-				cell.v[index].normal.y = -(density[base + (j+1)*width] - density[base - (j-1)*width]);
-				cell.v[index].normal.z = -(density[base + (k+1)*width*height] - density[base - (k-1)*width*height]);
+				cell.v[index].normal.x = -(density[base + (i+1)] - density[base + (i)]);
+				cell.v[index].normal.z = -(density[base + (j+1)*width] - density[base + (j)*width]);
+				cell.v[index].normal.y = -(density[base + (k+1)*width*height] - density[base + (k)*width*height]);
 
 				cell.v[index].density = density[base];
 				cell.v[index].vertex.x = (xn+i) * stride;
-				cell.v[index].vertex.y = (yn+j) * stride;
-				cell.v[index].vertex.z = (zn+k) * stride;
+				cell.v[index].vertex.z = (yn+j) * stride;
+				cell.v[index].vertex.y = (zn+k) * stride;
+
+				
 			}
+		}
+	}
 }
 
 
@@ -615,6 +616,10 @@ int clamp(int min, int x, int max)
 		return max;
 	return x;
 }
+
+
+
+
 
 /*void render_MarchingCubes(implicit_surface* v, float threshold)
 {

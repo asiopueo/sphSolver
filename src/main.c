@@ -435,7 +435,7 @@ int main(int argc, char** argv)
 
 
 	// Create density grid:
-	int edge = 10;
+	int edge = 4;
 	float density[(edge+2)*(edge+2)*(edge+2)];
 	//gridcell* density_grid[(edge+2)*(edge+2)*(edge+2)];
 
@@ -443,10 +443,10 @@ int main(int argc, char** argv)
 		density[i] = 0.0;
 
 	// Initialize values:
-	for (int i=2; i<edge; i++)
-		for (int j=2; j<edge; j++)
-			for (int k=2; k<edge; k++)
-				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 0.5+RANDF();
+	for (int i=2; i<edge+1; i++)
+		for (int j=2; j<edge+1; j++)
+			for (int k=2; k<edge+1; k++)
+				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 10.0;
 
 
 	std::vector<vec3> vertexdata;
@@ -457,8 +457,10 @@ int main(int argc, char** argv)
 	for (int i=1; i<edge+1; i++)
 		for (int j=1; j<edge+1; j++)
 			for (int k=1; k<edge+1; k++) {
-				get_cellvertices(cell, density, 1., edge+2, edge+2, i, j, k);
-				polygonize_cell(&cell, vertexdata, normaldata, 0.5);
+				get_cellvertices(cell, density, 0.1, edge+2, edge+2, i, j, k); // stride serves as a scaling factor
+				std::swap(cell.v[2],cell.v[3]);
+				std::swap(cell.v[6],cell.v[7]);
+				polygonize_cell(&cell, vertexdata, normaldata, 1.0);
 			}
 
 	cout << "Size: " << vertexdata.size() << endl;
@@ -469,7 +471,7 @@ int main(int argc, char** argv)
 
 
 	// Initialize Water
-	GLuint sprite_shaders = LoadShaders("shaders/water_sprites.vs", "shaders/water_sprites.fs");
+	//GLuint sprite_shaders = LoadShaders("shaders/water_sprites.vs", "shaders/water_sprites.fs");
 	GLuint water_shaders = LoadShaders("shaders/water_refrac.vs", "shaders/water_refrac.fs");
 
 	GLuint waterVAO, water_vertexVBO, water_normalVBO;
@@ -480,11 +482,11 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 		glGenBuffers(1, &water_normalVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0], GL_STATIC_DRAW);
 		
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -505,7 +507,7 @@ int main(int argc, char** argv)
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 100.0f);
 
 	// Get uniform locations
-	GLuint ModelMatrix_ID = glGetUniformLocation(water_shaders, "ModelMatrix");
+	//GLuint ModelMatrix_ID = glGetUniformLocation(water_shaders, "ModelMatrix");
 	GLuint ViewMatrix_ID = glGetUniformLocation(skybox_shaders, "ViewMatrix");
 	GLuint ProjectionMatrix_ID = glGetUniformLocation(skybox_shaders, "ProjectionMatrix");
 	GLuint MVP_ID = glGetUniformLocation(triangle_shaders, "MVP_matrix");
