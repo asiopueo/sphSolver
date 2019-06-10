@@ -1,10 +1,15 @@
 
 #include <iostream>
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+
+using namespace glm;
+
 #include "density.h"
 
 
 
-int get_density_index(density_grid* d, int i, int j, int k)
+/*int get_density_index(density_grid* d, int i, int j, int k)
 {
 	int index;
 
@@ -72,21 +77,25 @@ void density_stamp(density_grid* d, int gindex, int gx, int gy, int gz)
 			}
 		}
 	}
-}
+}*/
 
 
-void alloc_density_grid(density_grid* d, vec3* pos, float len)
+void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 {
-	int i, j, k;
-	float fmin_x = fmin_y = fmin_z = 1000;
-	float fmax_x = fmax_y = fmax_z = -1000;
+	float fmin_x;
+	float fmax_x;
+	float fmin_y;
+	float fmax_y;
+	float fmin_z;
+	float fmax_z;
+	
+	fmin_x = fmin_y = fmin_z = 1000;
+	fmax_x = fmax_y = fmax_z = -1000;
 
-	d->grid_len = len
-	d->inv_res = 1.0/len;
+	d->grid_len = len;
+	d->inv_grid_len = 1.0/len;
 
-	d->stamp_width = sph->r_search * d->inv_res;
-
-	for (i = 0; i < n_particles; i++)
+	for (int i = 0; i < n_particles; i++)
 	{
 		vec3* p = &pos[i];
 
@@ -108,19 +117,19 @@ void alloc_density_grid(density_grid* d, vec3* pos, float len)
 	d->miny = fmin_y;
 	d->minz = fmin_z;
 
-	d->width_x = (fmax_x-fmin_x)*inv_res + 1;
-	d->width_y = (fmax_y-fmin_y)*inv_res + 1;
-	d->width_z = (fmax_z-fmin_z)*inv_res + 1;
+	d->width_x = (fmax_x-fmin_x)*d->inv_grid_len + 1;
+	d->width_y = (fmax_y-fmin_y)*d->inv_grid_len + 1;
+	d->width_z = (fmax_z-fmin_z)*d->inv_grid_len + 1;
 
 	d->N_cells = d->width_x * d->width_y * d->width_z;
 	d->density = (float*) malloc(d->N_cells * sizeof(float));
 
-	if (d->cell_mem != NULL)
+	if (d->density != NULL)
 	{
 		free(d->density);
 	}
 
-	d->density = (int*) malloc(d->N_cells*sizeof(float));
+	d->density = (float*) malloc(d->N_cells*sizeof(float));
 
 	std::cout << "d->N_cells: " << d->N_cells << std::endl;
 

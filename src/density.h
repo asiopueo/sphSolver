@@ -7,9 +7,9 @@ typedef struct
 
 	float* density;
 
-	int width;
-	int height;
-	int depth;
+	int width_x;
+	int width_y;
+	int width_z;
 	int N_cells; // superfluous?
 
 	float minx;
@@ -19,4 +19,4 @@ typedef struct
 } density_grid;
 
 
-void alloc_density_grid(density_grid* d, vec3* pos, float len);
+void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len);

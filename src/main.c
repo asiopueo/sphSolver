@@ -107,6 +107,7 @@ sph_struc sph_instance;
 grid_struc grid_instance;
 neighbor_struc nbr_list;
 //render_struc render_instance;
+density_grid dense;
 vec3* vertexdata;
 vec3* normaldata;
 
@@ -430,9 +431,8 @@ int main(int argc, char** argv)
 
 
 	// Initialize simulation
-	//init_sph();
-	//create_nbr_list(&nbr_list);
-
+	init_sph();
+	create_nbr_list(&nbr_list);
 
 
 	// Create density grid:
@@ -467,6 +467,9 @@ int main(int argc, char** argv)
 	cout << "Number of vertices: " << vertexdata.size() << endl;
 
 
+
+	// Density grid allocation:
+	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
 
 
 
@@ -556,6 +559,12 @@ int main(int argc, char** argv)
 			glBindVertexArray(triangleVAO);
 				glDrawArrays(GL_TRIANGLES, 0, 3);
 			glBindVertexArray(0);
+
+
+			elapse();
+			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
+
+
 
 			// Render water
 			//get_pos(vertexdata, &sph_instance);
