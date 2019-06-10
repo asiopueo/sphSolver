@@ -16,8 +16,6 @@ using namespace glm;
 #include "physics.h"
 #include "marchingcubes.h"
 
-#define SWAP_V(x, y) {vec3 v = y; y = x; x = v;}
-
 #define EPSILON 1.0e-4
 
 #include <iostream>
@@ -457,21 +455,21 @@ void interpolate(vec3 &vertex, vec3 &normal, cellvertex &v0, cellvertex &v1, GLf
 	GLfloat mag;
 	GLfloat inv_mag;
 
-	if (fabsf(isolevel - v0.density) < EPSILON)
+	if (std::abs(isolevel - v0.density) < EPSILON)
 	{
 		normal = v0.normal;
 		vertex = v0.vertex;
 		return;
 	}
 	
-	if (fabsf(isolevel - v1.density) < EPSILON)
+	if (std::abs(isolevel - v1.density) < EPSILON)
 	{
 		normal = v1.normal;
 		vertex = v1.vertex;
 		return;
 	}
 	
-	if (fabsf(v0.density - v1.density) < EPSILON)
+	if (std::abs(v0.density - v1.density) < EPSILON)
 	{
 		normal = v0.normal;
 		vertex = v0.vertex;
@@ -479,7 +477,7 @@ void interpolate(vec3 &vertex, vec3 &normal, cellvertex &v0, cellvertex &v1, GLf
 	}
 
 	alpha = (isolevel - v0.density) / (v1.density - v0.density);
-	alpha = 0.5;
+	alpha = 0.5; // For debugging purposes only
 
 	vertex.x = v0.vertex.x + alpha * (v1.vertex.x - v0.vertex.x);
 	vertex.y = v0.vertex.y + alpha * (v1.vertex.y - v0.vertex.y);
@@ -490,12 +488,12 @@ void interpolate(vec3 &vertex, vec3 &normal, cellvertex &v0, cellvertex &v1, GLf
 	normal.z = v0.normal.z + alpha * (v1.normal.z - v0.normal.z);
 
 	mag = glm::length(normal);
-	inv_mag = 1.0f/mag;
+	inv_mag = 1.0/mag;
 
 	// Normalization of the interpolated normal
 	normal = glm::mat3(inv_mag)*normal;
 
-	/*if (normal.z > (0.9f))
+	/*if (normal.z > (0.9f)) // Doesn't seem necessary a.t.m.
 	{
 		normal.x = 0.0f;
 		normal.y = 0.0f;
@@ -567,22 +565,55 @@ void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector
 
 	for (i = 0; triTable[cubeindex][i] != -1; i += 3)
 	{
-		// Hier muessen die VBOs befüllt werden.  Wie ist die Reihenfolge der Daten bei 'push_back'?
-		vertex_data.push_back( vertlist[triTable[cubeindex][i]] );
-		vertex_data.push_back( vertlist[triTable[cubeindex][i+1]] );
-		vertex_data.push_back( vertlist[triTable[cubeindex][i+2]] );
+		glm::vec3 p, n_0, n_1, n_2, v_0, v_1, v_2;
 
-		normal_data.push_back( normlist[triTable[cubeindex][i]] );
-		normal_data.push_back( normlist[triTable[cubeindex][i+1]] );
-		normal_data.push_back( normlist[triTable[cubeindex][i+2]] );
+		v_0 = vertlist[ triTable[cubeindex][i]];
+		v_1 = vertlist[ triTable[cubeindex][i+1]];
+		v_2 = vertlist[ triTable[cubeindex][i+2]];
+
+		n_0 = normlist[ triTable[cubeindex][i]];
+		n_1 = normlist[ triTable[cubeindex][i+1]];
+		n_2 = normlist[ triTable[cubeindex][i+2]];
+		
+		p = glm::cross(v_2-v_0,v_1-v_0);
+	
+		// The following lines ensure the correct 'outward' orientation of the triangles.
+		// The original Marching Cubes algorithm (on which this one is based) does not care about orientation.
+		/*
+		std::cout << "v_0:" << v_0.x << "\t" << v_0.y << "\t" << v_0.z << std::endl; 
+		std::cout << "v_1:" << v_1.x << "\t" << v_1.y << "\t" << v_1.z << std::endl; 
+		std::cout << "v_2:" << v_2.x << "\t" << v_2.y << "\t" << v_2.z << std::endl; 
+		std::cout << std::endl;
+		*/
+
+		if (glm::dot(p,n_2)>0.0f)
+		{
+			vertex_data.push_back( v_0 );
+			vertex_data.push_back( v_2 );
+			vertex_data.push_back( v_1 );
+
+			normal_data.push_back( n_0 );
+			normal_data.push_back( n_2 );
+			normal_data.push_back( n_1 );
+		}
+		else
+		{
+			vertex_data.push_back( v_0 );
+			vertex_data.push_back( v_1 );
+			vertex_data.push_back( v_2 );
+
+			normal_data.push_back( n_0 );
+			normal_data.push_back( n_1 );
+			normal_data.push_back( n_2 );
+		}
 	}
 }
 
 
 void get_cellvertices(gridcell& cell, 
-					GLfloat* density, GLfloat stride,
-					GLuint width, GLuint height,
-					GLuint xn, GLuint yn, GLuint zn)
+					float* density, float stride,
+					int width, int height,
+					int xn, int yn, int zn)
 {
 	for (int i=0; i<2; i++) {
 		for (int j=0; j<2; j++) {
@@ -590,17 +621,17 @@ void get_cellvertices(gridcell& cell,
 			{
 				int base = (xn+i) + (yn+j)*width + (zn+k)*width*height;
 				int index = i + 2*j + 4*k;
-				// Calculate gradients at the cellvertex
-				cell.v[index].normal.x = -(density[base + (i+1)] - density[base + (i)]);
-				cell.v[index].normal.z = -(density[base + (j+1)*width] - density[base + (j)*width]);
-				cell.v[index].normal.y = -(density[base + (k+1)*width*height] - density[base + (k)*width*height]);
-
-				cell.v[index].density = density[base];
-				cell.v[index].vertex.x = (xn+i) * stride;
-				cell.v[index].vertex.z = (yn+j) * stride;
-				cell.v[index].vertex.y = (zn+k) * stride;
-
 				
+				cell.v[index].density = density[base];
+
+				cell.v[index].vertex.x = (xn+i) * stride;
+				cell.v[index].vertex.y = (yn+j) * stride;
+				cell.v[index].vertex.z = (zn+k) * stride;
+
+				// Calculate gradients at the cellvertex
+				cell.v[index].normal.x = -(density[base + 1] - density[base - 1]);
+				cell.v[index].normal.y = -(density[base + width] - density[base - width]);
+				cell.v[index].normal.z = -(density[base + width*height] - density[base - width*height]);				
 			}
 		}
 	}

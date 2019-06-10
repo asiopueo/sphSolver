@@ -435,35 +435,35 @@ int main(int argc, char** argv)
 
 
 	// Create density grid:
-	int edge = 4;
+	int edge = 20;
+	int border = 2;	
 	float density[(edge+2)*(edge+2)*(edge+2)];
-	//gridcell* density_grid[(edge+2)*(edge+2)*(edge+2)];
 
 	for (int i=0; i<(edge+2)*(edge+2)*(edge+2); i++)
 		density[i] = 0.0;
 
+
 	// Initialize values:
-	for (int i=2; i<edge+1; i++)
-		for (int j=2; j<edge+1; j++)
-			for (int k=2; k<edge+1; k++)
+	for (int i=2+border; i<edge-border; i++)
+		for (int j=2+border; j<edge-border; j++)
+			for (int k=2+border; k<edge-border; k++)
 				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 10.0;
 
 
 	std::vector<vec3> vertexdata;
 	std::vector<vec3> normaldata;
 
-	gridcell cell;
-
 	for (int i=1; i<edge+1; i++)
 		for (int j=1; j<edge+1; j++)
 			for (int k=1; k<edge+1; k++) {
+				gridcell cell;
 				get_cellvertices(cell, density, 0.1, edge+2, edge+2, i, j, k); // stride serves as a scaling factor
-				std::swap(cell.v[2],cell.v[3]);
-				std::swap(cell.v[6],cell.v[7]);
+				std::swap(cell.v[2], cell.v[3]);
+				std::swap(cell.v[6], cell.v[7]);
 				polygonize_cell(&cell, vertexdata, normaldata, 1.0);
 			}
 
-	cout << "Size: " << vertexdata.size() << endl;
+	cout << "Number of vertices: " << vertexdata.size() << endl;
 
 
 
@@ -515,7 +515,7 @@ int main(int argc, char** argv)
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE); // Need to fix the 'cull' for the fonts
 	glPointSize(4.0f);
 
 
