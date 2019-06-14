@@ -214,11 +214,10 @@ vec3 compute_collision(vec3 normal)
 // Collision for a glass cube
 void process_collision(sph_struc* sph)
 {
-	int i;
 	float delta_x; // Distance between object and fluid particle
-	vec3 normal;
+	vec3 normal; // the inward normal
 	
-	for (i = 0; i < sph->n_particles; i++)
+	for (int i = 0; i < sph->n_particles; i++)
 	{
 		float edge_length = 1.0; 	// half-length of box: 0.5
 		mat3 wall_parameter = mat3(1.0e3);
@@ -239,7 +238,6 @@ void process_collision(sph_struc* sph)
 		delta_x = dot(pos_pred, normal);
 		if (delta_x < -edge_length)
 		{
-
 			sph->force[i] += wall_parameter*compute_collision(normal);
 		}
 
@@ -247,7 +245,6 @@ void process_collision(sph_struc* sph)
 		delta_x = dot(pos_pred, normal);
 		if (delta_x < -edge_length)
 		{
-
 			sph->force[i] += wall_parameter*compute_collision(normal);
 		}
 
@@ -255,7 +252,6 @@ void process_collision(sph_struc* sph)
 		delta_x = dot(pos_pred, normal);
 		if (delta_x < -edge_length)
 		{
-
 			sph->force[i] += wall_parameter*compute_collision(normal);
 		}
 
@@ -263,7 +259,6 @@ void process_collision(sph_struc* sph)
 		delta_x = dot(pos_pred, normal);
 		if (delta_x < -edge_length)
 		{
-
 			sph->force[i] += wall_parameter*compute_collision(normal);
 		}
 
@@ -277,7 +272,65 @@ void process_collision(sph_struc* sph)
 	return;
 }
 
+// Collision for a glass cube
+void process_reflection(sph_struc* sph)
+{
+	float delta_x; // Distance between object and fluid particle
+	vec3 normal; // the inward normal
+	
+	for (int i = 0; i < sph->n_particles; i++)
+	{
+		float edge_length = 1.0; 	// half-length of box: 0.5
 
+		vec3 pos_pred = sph->pos[i] + sph->timestep * sph->vel[i];
+
+		// Bottom plate
+		normal = vec3( 0.0f, 1.0f, 0.0f);
+		delta_x = dot(pos_pred, normal);
+
+		if (delta_x < -edge_length)
+		{
+			sph->vel[i] -= normal*dot(normal,sph->vel[i]);
+		}
+
+		// Top plate
+		normal = vec3( 0.0f, -1.0f, 0.0f);
+		delta_x = dot(pos_pred, normal);
+		if (delta_x < -edge_length)
+		{
+			sph->vel[i] -= normal*dot(normal,sph->vel[i]);
+		}
+
+		normal = vec3( -1.0f, 0.0f, 0.0f);
+		delta_x = dot(pos_pred, normal);
+		if (delta_x < -edge_length)
+		{
+			sph->vel[i] -= normal*dot(normal,sph->vel[i]);
+		}
+
+		normal = vec3(1.0f, 0.0f, 0.0f);
+		delta_x = dot(pos_pred, normal);
+		if (delta_x < -edge_length)
+		{
+			sph->vel[i] -= normal*dot(normal,sph->vel[i]);
+		}
+
+		normal = vec3(0.0f, 0.0f, -1.0f );
+		delta_x = dot(pos_pred, normal);
+		if (delta_x < -edge_length)
+		{
+			sph->vel[i] -= normal*dot(normal,sph->vel[i]);
+		}
+
+		normal = vec3( 0.0f, 0.0f, 1.0f );
+		delta_x = dot(pos_pred, normal);
+		if (delta_x < -edge_length)
+		{
+			sph->vel[i] -= normal*dot(normal,sph->vel[i]);
+		}
+	}
+	return;
+}
 
 void elapse_water(sph_struc* sph, grid_struc* g, neighbor_struc* nbr_list)
 {
@@ -287,13 +340,12 @@ void elapse_water(sph_struc* sph, grid_struc* g, neighbor_struc* nbr_list)
 	memset(sph->force, 0, sph->n_particles * sizeof(vec3));
 	//compute_density(sph, nbr_list);
 	compute_force(sph, nbr_list);
-
-	process_collision(sph);
+	//process_collision(sph);
+	process_reflection(sph);
 	
-	// Gravity only (debugging):
 	//float scale = 1.0e-12; // for debugging purposes only
-	//vec3 gravity = vec3(0.0, -1e3, 0.0);
-	vec3 gravity = vec3(0.0);
+	vec3 gravity = vec3(0.0, -1e3, 0.0);
+	//vec3 gravity = vec3(0.0);
 
 
 	// Time integration (Euler method)
