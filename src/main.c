@@ -477,21 +477,22 @@ int main(int argc, char** argv)
 
 
 
-
+	polygonize_density(dense, vertexdata, normaldata, 1.5);
+	
 	// May be compactified to a function later.
-	for (int i=0; i<dense.width_x; i++) {
+	/*for (int i=0; i<dense.width_x; i++) {
 		for (int j=0; j<dense.width_y; j++) {
 			for (int k=0; k<dense.width_z; k++) {
 				gridcell cell;
 				get_cellvertices(cell, dense, i, j, k); // stride serves as a scaling factor
 				std::swap(cell.v[2], cell.v[3]);
 				std::swap(cell.v[6], cell.v[7]);
-				polygonize_cell(&cell, vertexdata, normaldata, 0.9);
+				polygonize_cell(&cell, vertexdata, normaldata, 1.5);
 			}
 		}
 	}
 
-	cout << "vertexdata.size(): " << vertexdata.size() << endl;
+	cout << "vertexdata.size(): " << vertexdata.size() << endl;*/
 
 
 
@@ -618,12 +619,14 @@ int main(int argc, char** argv)
 
 
 
-			//elapse();
+			elapse();
 			//alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
 			get_pos(spritedata, &sph_instance);
 
+
+
+
 			// Sprites
-			
 			glUseProgram(sprite_shaders);
 			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
 			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);

@@ -23,4 +23,5 @@ void get_cellvertices(gridcell& cell, density_grid& density, int xn, int yn, int
 
 void polygonize_cell(gridcell* grid, std::vector<vec3>& vertex_data, std::vector<vec3>& normal_data, float isolevel);
 
+void polygonize_density(density_grid& density, std::vector<vec3>& vertex_data, std::vector<vec3>& normal_data, float isolevel);
 

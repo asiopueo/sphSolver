@@ -375,6 +375,8 @@ void interpolate(vec3 &vertex, vec3 &normal, cellvertex &v0, cellvertex &v1, GLf
 }
 
 
+
+
 // Polygonize one density cell (consisting of 8 points)
 void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector<vec3> &normal_data, float isolevel)
 {
@@ -483,7 +485,26 @@ void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector
 }
 
 
-// eliminate stride
+
+void polygonize_density(density_grid &d, std::vector<vec3> &vertices, std::vector<vec3> &normals, float isolevel)
+{
+	for (int i=0; i<d.width_x; i++) {
+		for (int j=0; j<d.width_y; j++) {
+			for (int k=0; k<d.width_z; k++) {
+				gridcell cell;
+				get_cellvertices(cell, d, i, j, k); // stride serves as a scaling factor
+				std::swap(cell.v[2], cell.v[3]);
+				std::swap(cell.v[6], cell.v[7]);
+				polygonize_cell(&cell, vertices, normals, 1.5);
+			}
+		}
+	}
+
+	cout << "vertexdata.size(): " << vertices.size() << endl;
+}
+
+
+
 void get_cellvertices(gridcell& cell, density_grid& d, int xn, int yn, int zn)
 {
 	int width_x = d.width_x;

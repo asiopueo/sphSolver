@@ -65,7 +65,7 @@ void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 	{
 		int dindex = get_density_index(d, sph->pos[i]);
 
-		std::cout << dindex << std::endl;
+		//std::cout << dindex << std::endl;
 
 		for (int gx=0; gx < s->width_x; gx++)
 		{
