@@ -454,13 +454,6 @@ void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector
 	
 		// The following lines ensure the correct 'outward' orientation of the triangles.
 		// The original Marching Cubes algorithm (on which this one is based) does not care about orientation.
-		/*
-		std::cout << "v_0:" << v_0.x << "\t" << v_0.y << "\t" << v_0.z << std::endl; 
-		std::cout << "v_1:" << v_1.x << "\t" << v_1.y << "\t" << v_1.z << std::endl; 
-		std::cout << "v_2:" << v_2.x << "\t" << v_2.y << "\t" << v_2.z << std::endl; 
-		std::cout << std::endl;
-		*/
-
 		if (glm::dot(p,n_2)>0.0f)
 		{
 			vertex_data.push_back( v_0 );
