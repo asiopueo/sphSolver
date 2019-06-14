@@ -19,7 +19,7 @@ struct gridcell
 	gridcell g;
 };*/
 
-void get_cellvertices(gridcell& cell, float* density, float stride,	int width, int height, int xn, int yn, int zn);
+void get_cellvertices(gridcell& cell, density_grid& density, int xn, int yn, int zn);
 
 void polygonize_cell(gridcell* grid, std::vector<vec3>& vertex_data, std::vector<vec3>& normal_data, float isolevel);
 

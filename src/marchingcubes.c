@@ -14,7 +14,9 @@ using namespace glm;
 #include "memory.h"
 #include "common.h"
 #include "physics.h"
+#include "density.h"
 #include "marchingcubes.h"
+
 
 #define EPSILON 1.0e-4
 
@@ -481,28 +483,29 @@ void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector
 }
 
 
-void get_cellvertices(gridcell& cell, 
-					float* density, float stride,
-					int width, int height,
-					int xn, int yn, int zn)
+// eliminate stride
+void get_cellvertices(gridcell& cell, density_grid& d, int xn, int yn, int zn)
 {
+	int width_x = d.width_x;
+	int width_y = d.width_y;
+
 	for (int i=0; i<2; i++) {
 		for (int j=0; j<2; j++) {
 			for (int k=0; k<2; k++)
 			{
-				int base = (xn+i) + (yn+j)*width + (zn+k)*width*height;
+				int base = (xn+i) + (yn+j)*width_x + (zn+k)*width_x*width_y;
 				int index = i + 2*j + 4*k;
 				
-				cell.v[index].density = density[base];
+				cell.v[index].density = d.density[base];
 
-				cell.v[index].vertex.x = (xn+i) * stride;
-				cell.v[index].vertex.y = (yn+j) * stride;
-				cell.v[index].vertex.z = (zn+k) * stride;
+				cell.v[index].vertex.x = (xn+i) * d.grid_len + d.minx;
+				cell.v[index].vertex.y = (yn+j) * d.grid_len + d.miny;
+				cell.v[index].vertex.z = (zn+k) * d.grid_len + d.minz;
 
 				// Calculate gradients at the cellvertex
-				cell.v[index].normal.x = -(density[base + 1] - density[base - 1]);
-				cell.v[index].normal.y = -(density[base + width] - density[base - width]);
-				cell.v[index].normal.z = -(density[base + width*height] - density[base - width*height]);				
+				cell.v[index].normal.x = -(d.density[base + 1] - d.density[base - 1]);
+				cell.v[index].normal.y = -(d.density[base + width_x] - d.density[base - width_x]);
+				cell.v[index].normal.z = -(d.density[base + width_x*width_y] - d.density[base - width_x*width_y]);				
 			}
 		}
 	}

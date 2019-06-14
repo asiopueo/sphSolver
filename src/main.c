@@ -45,8 +45,9 @@ using namespace glm;
 #include "common.h"
 #include "physics.h"
 #include "loader.h"
-#include "marchingcubes.h"
 #include "density.h"
+#include "marchingcubes.h"
+
 
 // Model data
 #include "modeldata.h"
@@ -54,26 +55,26 @@ using namespace glm;
 
 
 // Definition of constants
-#define SMOOTHING_LENGTH 0.05f  // Ein wenig länger als der initiale Teilchenabstand.
+#define SMOOTHING_LENGTH 0.05 // Ein wenig länger als der initiale Teilchenabstand.
 #define SEARCH_RADIUS (SMOOTHING_LENGTH)
 #define CUBE_LEN_X 10
 #define CUBE_LEN_Y 10
 #define CUBE_LEN_Z 10
-#define SCAL_LEN 0.1f
+#define SCAL_LEN 0.1
 #define N_PARTICLES (CUBE_LEN_X*CUBE_LEN_Y*CUBE_LEN_Z)
-#define TIME_STEP 0.0001f   // TIME_STEP has influence on the stability of the program.
-#define EPSILON 0.05f
-#define VISCOSITY 0.1f
-#define STIFF 1.0f
-#define MASS 0.1f
+#define TIME_STEP 0.0001  // TIME_STEP has influence on the stability of the program.
+#define EPSILON 0.05
+#define VISCOSITY 0.1
+#define STIFF 1.0
+#define MASS 0.1
 
-#define ISO_THRESHOLD 700.0f
-#define ISO_RADIUS 0.0115f
-#define MC_GRID_LEN 0.005f
+#define ISO_THRESHOLD 700.0
+#define ISO_RADIUS 0.0115
+#define MC_GRID_LEN 0.005
 
-const float PI = 3.1415926535f;
+const float PI = 3.1415926535;
 
-#define RANDF() 0.2f * ((rand()/(GLfloat)RAND_MAX - 0.5f))
+#define RANDF() 0.2 * ((rand()/(GLfloat)RAND_MAX - 0.5))
 
 
 
@@ -255,8 +256,6 @@ void render_text(GLint freetype_shdrs, const char *text, float x, float y, float
 // Initialize the states of particles
 void init_sph(void)
 {
-	int i;
-
 	vec3 pos[N_PARTICLES];
 	vec3 vel[N_PARTICLES];
 
@@ -267,7 +266,7 @@ void init_sph(void)
 		for (int y = 0; y < CUBE_LEN_Y; y++)
 			for (int z = 0; z < CUBE_LEN_Z; z++)
 			{
-				i = x + y*CUBE_LEN_X + z*CUBE_LEN_X*CUBE_LEN_Y;
+				int i = x + y*CUBE_LEN_X + z*CUBE_LEN_X*CUBE_LEN_Y;
 				pos[i] = vec3(SCAL_LEN*(x + RANDF() - CUBE_LEN_X/2), SCAL_LEN*(y + RANDF() - CUBE_LEN_Y/2), SCAL_LEN*(z + RANDF() - CUBE_LEN_Z/2));
 				vel[i] = vec3(0.0f, 0.0f, 0.0f);
 			}
@@ -429,10 +428,12 @@ int main(int argc, char** argv)
 	glBindVertexArray(0);
 
 
-
+	std::vector<vec3> vertexdata;
+	std::vector<vec3> normaldata;
 
 
 	// Create density grid:
+	/* Testcube
 	int edge = 20;
 	int border = 2;	
 	float density[(edge+2)*(edge+2)*(edge+2)];
@@ -440,17 +441,14 @@ int main(int argc, char** argv)
 	for (int i=0; i<(edge+2)*(edge+2)*(edge+2); i++)
 		density[i] = 0.0;
 
-
 	// Initialize values:
 	for (int i=2+border; i<edge-border; i++)
 		for (int j=2+border; j<edge-border; j++)
 			for (int k=2+border; k<edge-border; k++)
 				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 10.0;
+	
 
-
-	std::vector<vec3> vertexdata;
-	std::vector<vec3> normaldata;
-
+	// Testcube
 	for (int i=1; i<edge+1; i++)
 		for (int j=1; j<edge+1; j++)
 			for (int k=1; k<edge+1; k++) {
@@ -462,6 +460,42 @@ int main(int argc, char** argv)
 			}
 
 	cout << "Number of vertices: " << vertexdata.size() << endl;
+	*/
+
+
+
+	// Initialize simulation
+	init_sph();
+	create_nbr_list(&nbr_list);
+	// Density grid allocation:
+	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1); // density_grid needs to be shift by CUBE_LEN/2 from the origin!
+	// Missing here: desity cells need volume calculation
+	density_stamp stamp;
+	alloc_density_stamp(&stamp, 3, 3, 3, 0.1, 0.15);
+	assign_density_to_grid(&dense, &stamp, &sph_instance);
+
+
+
+
+
+	// May be compactified to a function later.
+	for (int i=0; i<dense.width_x; i++) {
+		for (int j=0; j<dense.width_y; j++) {
+			for (int k=0; k<dense.width_z; k++) {
+				gridcell cell;
+				get_cellvertices(cell, dense, i, j, k); // stride serves as a scaling factor
+				std::swap(cell.v[2], cell.v[3]);
+				std::swap(cell.v[6], cell.v[7]);
+				polygonize_cell(&cell, vertexdata, normaldata, 0.9);
+			}
+		}
+	}
+
+	cout << "vertexdata.size(): " << vertexdata.size() << endl;
+
+
+
+
 
 
 
@@ -491,13 +525,6 @@ int main(int argc, char** argv)
 
 
 
-
-	// Initialize simulation
-	init_sph();
-	create_nbr_list(&nbr_list);
-	// Density grid allocation:
-	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
-
 	vec3 spritedata[sph_instance.n_particles];
 	
 	GLuint spriteVAO, sprite_vertexVBO;
@@ -506,6 +533,7 @@ int main(int argc, char** argv)
 		glGenBuffers(1, &sprite_vertexVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, sprite_vertexVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0], GL_STATIC_DRAW);
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindVertexArray(0);
@@ -576,8 +604,6 @@ int main(int argc, char** argv)
 			glBindVertexArray(0);
 
 
-
-
 			// Render water
 			glUseProgram(water_shaders);
 			ModelMatrix = mat4(1.0f);
@@ -592,11 +618,12 @@ int main(int argc, char** argv)
 
 
 
-			elapse();
-			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
+			//elapse();
+			//alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
 			get_pos(spritedata, &sph_instance);
 
 			// Sprites
+			
 			glUseProgram(sprite_shaders);
 			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
 			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
@@ -605,9 +632,11 @@ int main(int argc, char** argv)
 			glBindVertexArray(spriteVAO);
 				glBindBuffer(GL_ARRAY_BUFFER, sprite_vertexVBO);
 				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0]);
+				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
 				glDrawArrays(GL_POINTS, 0, sizeof(vec3) * sph_instance.n_particles);
+				//glDrawArrays(GL_POINTS, 0, sizeof(glm::vec3) * vertexdata.size());
 			glBindVertexArray(0);
-
+			
 
 
 

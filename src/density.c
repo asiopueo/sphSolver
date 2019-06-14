@@ -5,79 +5,91 @@
 
 using namespace glm;
 
+#include "common.h"
+#include "physics.h"
 #include "density.h"
 
 
 
-/*int get_density_index(density_grid* d, int i, int j, int k)
+int get_density_index(density_grid* d, glm::vec3 v)
 {
-	int index;
-
-	index = i + j * d->width_y + k * d->width_y * d->width_z;
-
-	return index;
+	int dx = (int) ((v.x - d->minx ) * d->inv_grid_len);
+	int dy = (int) ((v.y - d->miny ) * d->inv_grid_len);
+	int dz = (int) ((v.z - d->minz ) * d->inv_grid_len);
+	return dx + dy * d->width_x + dz * d->width_x * d->width_y;
 }
 
-
-void create_density_stamp()
+// Still buggy
+void alloc_density_stamp(density_stamp* s, uint length, uint width, uint height, float len, float radius)
 {
-	r->stamp = (float*) calloc(width*width*width);
+	s->grid_len = len;
+	s->inv_grid_len = 1.0/len;
 
-	for (gx=-stamp_width; gx <= stamp_width; gx++)
+	s->width_x = length;
+	s->width_y = width;
+	s->width_z = height;
+	s->n_cells = length*width*height;
+
+	int l_half = (int) length/2.;
+	int w_half = (int) width/2.;
+	int h_half = (int) height/2.;
+
+	s->density = (float*) calloc(s->width_x * s->width_y * s->width_z, sizeof(float));
+
+	for (int gx=0; gx < s->width_x; gx++)
 	{
-		for (gy=-stamp_width; gy <= stamp_width; gy++)
+		for (int gy=0; gy < s->width_y; gy++)
 		{
-			for (gz=-stamp_width; gz <= stamp_width; gz++)
+			for (int gz=0; gz < s->width_z; gz++)
 			{
-				if (distsq < hsq)
-					stamp[] = 1.0f;
+				int index = gx + gy * s->width_x + gz * s->width_x*s->width_y;
+
+				float distsq = s->grid_len * sqrt( std::pow(gx-l_half, 2)+std::pow(gy-w_half, 2)+std::pow(gz-h_half, 2) );
+
+				if (distsq < radius)
+					s->density[index] = 0.1;
 				else
-					stamp[] = 0.0f;
+					s->density[index] = 0.0;
+
+				//std::cout << s->density[index] << std::endl;
 			}
 		}
 	}
 }
 
 
-
-
-float add_density_stap(int gindex, vec3 pos)
+// The density grid should be larger...
+void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 {
-	int = (int) (pos.x - minx)*r->inv_res;
-	int = (int) (pos.y - miny)*r->inv_res;
-	int = (int) (pos.z - minz)*r->inv_res;
-
-	for (int i=0; i < N_stamp; i++)
+	for (int i=0; i<sph->n_particles; i++)
 	{
-		vec3 tmp = stamp_pos[i] - pos;
-		distsq = dot(tmp,tmp);
-		if (distsq < h*h)
-			density += ;
-	}
-}
+		int dindex = get_density_index(d, sph->pos[i]);
 
+		std::cout << dindex << std::endl;
 
-
-
-void density_stamp(density_grid* d, int gindex, int gx, int gy, int gz)
-{
-	d->stamp
-
-	for (int i=0; i< sph->n_particles; i++)
-	{
-		for (gx=-stamp_width; gx <= stamp_width; gx++)
+		for (int gx=0; gx < s->width_x; gx++)
 		{
-			for (gy=-stamp_width; gy <= stamp_width; gy++)
+			for (int gy=0; gy < s->width_y; gy++)
 			{
-				for (gz=-stamp_width; gz <= stamp_width; gz++)
+				for (int gz=0; gz < s->width_z; gz++)
 				{
-					if( (gindex < 0)|| (gindex < r->MC_cells))
-						r->density[gindex] += add_density_stamp(gindex,pos[i]);
+					// here is still a bug:
+					int offset = gx + gy*d->width_x + gz*d->width_x*d->width_y;
+					int stamp_index = gx + gy*s->width_x + gz*s->width_x*s->width_y;
+
+					if ( (dindex+offset < d->N_cells) && (stamp_index < s->n_cells) )
+					{ 
+						d->density[dindex+offset] += s->density[stamp_index];
+					}
+					//if ( d->density[dindex+offset] != 0. )
+					//	std::cout << d->density[dindex+offset] << std::endl;
 				}
 			}
 		}
 	}
-}*/
+}
+
+
 
 
 void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
@@ -113,13 +125,16 @@ void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 			fmax_z = p->z;
 	}
 
-	d->minx = fmin_x;
-	d->miny = fmin_y;
-	d->minz = fmin_z;
+	// debugging purposes only
+	const int collar = 1;
 
-	d->width_x = (fmax_x-fmin_x)*d->inv_grid_len + 1;
-	d->width_y = (fmax_y-fmin_y)*d->inv_grid_len + 1;
-	d->width_z = (fmax_z-fmin_z)*d->inv_grid_len + 1;
+	d->minx = fmin_x - collar*d->grid_len;
+	d->miny = fmin_y - collar*d->grid_len;
+	d->minz = fmin_z - collar*d->grid_len;
+
+	d->width_x = (fmax_x-fmin_x)*d->inv_grid_len + 1 + 2*collar;
+	d->width_y = (fmax_y-fmin_y)*d->inv_grid_len + 1 + 2*collar;
+	d->width_z = (fmax_z-fmin_z)*d->inv_grid_len + 1 + 2*collar;
 
 	d->N_cells = d->width_x * d->width_y * d->width_z;
 	d->density = (float*) malloc(d->N_cells * sizeof(float));
@@ -129,21 +144,7 @@ void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 		free(d->density);
 	}
 
-	d->density = (float*) malloc(d->N_cells*sizeof(float));
+	d->density = (float*) calloc(d->N_cells*sizeof(float), sizeof(float));
 
 	std::cout << "d->N_cells: " << d->N_cells << std::endl;
-
-	/*int gx, gy, gz;
-
-	for (gx=-stamp_width; gx <= stamp_width; gx++)
-	{
-		for (gy=-stamp_width; gy <= stamp_width; gy++)
-		{
-			for (gz=-stamp_width; gz <= stamp_width; gz++)
-			{
-				index = get_density_index(gx,gy,gz);
-				density[index] += density_stamp( );
-			}
-		}
-	}*/
 }
