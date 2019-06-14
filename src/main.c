@@ -68,9 +68,11 @@ using namespace glm;
 #define STIFF 1.0
 #define MASS 0.1
 
-#define ISO_THRESHOLD 700.0
+#define ISO_THRESHOLD 0.1
 #define ISO_RADIUS 0.0115
 #define MC_GRID_LEN 0.005
+
+#define DENSITY_RES 0.1
 
 const float PI = 3.1415926535;
 
@@ -469,13 +471,13 @@ int main(int argc, char** argv)
 	create_nbr_list(&nbr_list);
 	// Density stamp
 	density_stamp stamp;
-	alloc_density_stamp(&stamp, 3, 3, 3, 0.1, 0.15);
+	alloc_density_stamp(&stamp, 5, 5, 5, DENSITY_RES, 0.2);
 	// Density grid allocation:
-	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1); // density_grid needs to be shift by CUBE_LEN/2 from the origin!
+	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, DENSITY_RES);
 	// Missing here: desity cells need volume calculation
 
 	assign_density_to_grid(&dense, &stamp, &sph_instance);
-	polygonize_density(dense, vertexdata, normaldata, 1.5);
+	polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
 
 
 
@@ -521,8 +523,6 @@ int main(int argc, char** argv)
 
 
 
-
-
 	// Initialize Camera
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 10.0f);
 	Position = vec3(0.0f, 0.0f, 0.0f);
@@ -533,8 +533,6 @@ int main(int argc, char** argv)
 	ModelMatrix = mat4(1.0f);
 	ViewMatrix = lookAt( vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 100.0f);
-
-
 
 
 
@@ -605,12 +603,12 @@ int main(int argc, char** argv)
 
 
 			elapse();
-			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
+			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, DENSITY_RES);
 			assign_density_to_grid(&dense, &stamp, &sph_instance);
 			
-			//vertexdata.clear();
-			//normaldata.clear();
-			//polygonize_density(dense, vertexdata, normaldata, 0.1);
+			vertexdata.clear();
+			normaldata.clear();
+			polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
 
 			GLuint positionLocation = glGetAttribLocation(water_shaders, "position");
 			GLuint normalLocation = glGetAttribLocation(water_shaders, "normal");
@@ -618,16 +616,11 @@ int main(int argc, char** argv)
 			glBindVertexArray(waterVAO);
 				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
 				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
-				//glEnableVertexAttribArray(positionLocation);
-				//glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) 0);
 				glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
 				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
-				//glEnableVertexAttribArray(normalLocation);
-				//glVertexAttribPointer(normalLocation, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) sizeof(vertexdata));
 
 				glDrawArrays(GL_TRIANGLES, 0, sizeof(glm::vec3) * vertexdata.size());
 			glBindVertexArray(0);
-
 
 
 
