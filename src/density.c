@@ -85,7 +85,6 @@ void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 					}
 					if ( d->density[dindex+offset] > max )
 						max=d->density[dindex+offset];
-					//	std::cout << d->density[dindex+offset] << std::endl;
 				}
 			}
 		}
@@ -96,7 +95,7 @@ void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 
 
 
-void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
+void alloc_density_grid(density_grid* d, sph_struc* sph, float len)
 {
 	float fmin_x;
 	float fmax_x;
@@ -111,9 +110,9 @@ void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 	d->grid_len = len;
 	d->inv_grid_len = 1.0/len;
 
-	for (int i = 0; i < n_particles; i++)
+	for (int i = 0; i < sph->n_particles; i++)
 	{
-		vec3* p = &pos[i];
+		vec3* p = &sph->pos[i];
 
 		if (fmin_x > p->x)
 			fmin_x = p->x;
@@ -130,7 +129,7 @@ void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 	}
 
 	// debugging purposes only
-	const int collar = 1;
+	const int collar = 3;
 
 	d->minx = fmin_x - collar*d->grid_len;
 	d->miny = fmin_y - collar*d->grid_len;
@@ -150,5 +149,5 @@ void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 
 	d->density = (float*) calloc(d->N_cells*sizeof(float), sizeof(float));
 
-	std::cout << "d->N_cells: " << d->N_cells << std::endl;
+	//std::cout << "d->N_cells: " << d->N_cells << std::endl;
 }

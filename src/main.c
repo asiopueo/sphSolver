@@ -473,7 +473,7 @@ int main(int argc, char** argv)
 	density_stamp stamp;
 	alloc_density_stamp(&stamp, 5, 5, 5, DENSITY_RES, 0.2);
 	// Density grid allocation:
-	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, DENSITY_RES);
+	alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
 	// Missing here: desity cells need volume calculation
 
 	assign_density_to_grid(&dense, &stamp, &sph_instance);
@@ -603,7 +603,7 @@ int main(int argc, char** argv)
 
 
 			elapse();
-			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, DENSITY_RES);
+			alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
 			assign_density_to_grid(&dense, &stamp, &sph_instance);
 			
 			vertexdata.clear();

@@ -42,4 +42,4 @@ void alloc_density_stamp(density_stamp* s, uint length, uint width, uint height,
 
 void assign_density_to_grid(density_grid* d, density_stamp* stmp, sph_struc* sph);
 
-void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len);
+void alloc_density_grid(density_grid* d, sph_struc* sph, float len);

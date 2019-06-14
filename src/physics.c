@@ -339,7 +339,7 @@ void elapse_water(sph_struc* sph, grid_struc* g, neighbor_struc* nbr_list)
 
 	memset(sph->force, 0, sph->n_particles * sizeof(vec3));
 	//compute_density(sph, nbr_list);
-	compute_force(sph, nbr_list);
+	//compute_force(sph, nbr_list);
 	//process_collision(sph);
 	process_reflection(sph);
 	
