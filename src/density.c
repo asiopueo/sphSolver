@@ -61,6 +61,8 @@ void alloc_density_stamp(density_stamp* s, uint length, uint width, uint height,
 // The density grid should be larger...
 void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 {
+	float max = 0.;
+
 	for (int i=0; i<sph->n_particles; i++)
 	{
 		int dindex = get_density_index(d, sph->pos[i]);
@@ -81,12 +83,14 @@ void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 					{ 
 						d->density[dindex+offset] += s->density[stamp_index];
 					}
-					//if ( d->density[dindex+offset] != 0. )
+					if ( d->density[dindex+offset] > max )
+						max=d->density[dindex+offset];
 					//	std::cout << d->density[dindex+offset] << std::endl;
 				}
 			}
 		}
 	}
+	//std::cout << "Maximum density: " << max << std::endl;
 }
 
 
@@ -146,5 +150,5 @@ void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 
 	d->density = (float*) calloc(d->N_cells*sizeof(float), sizeof(float));
 
-	//std::cout << "d->N_cells: " << d->N_cells << std::endl;
+	std::cout << "d->N_cells: " << d->N_cells << std::endl;
 }
