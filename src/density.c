@@ -63,23 +63,28 @@ void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 {
 	float max = 0.;
 
+	int l_half = (int) s->width_x/2.;
+	int w_half = (int) s->width_y/2.;
+	int h_half = (int) s->width_z/2.;
+
+
 	for (int i=0; i<sph->n_particles; i++)
 	{
 		int dindex = get_density_index(d, sph->pos[i]);
 
 		//std::cout << dindex << std::endl;
 
-		for (int gx=0; gx < s->width_x; gx++)
+		for (int gx=-l_half; gx < l_half; gx++)
 		{
-			for (int gy=0; gy < s->width_y; gy++)
+			for (int gy=-w_half; gy < w_half; gy++)
 			{
-				for (int gz=0; gz < s->width_z; gz++)
+				for (int gz=-h_half; gz < h_half; gz++)
 				{
 					// here is still a bug:
 					int offset = gx + gy*d->width_x + gz*d->width_x*d->width_y;
-					int stamp_index = gx + gy*s->width_x + gz*s->width_x*s->width_y;
+					int stamp_index = (gx+l_half) + (gy+w_half)*s->width_x + (gz+h_half)*s->width_x*s->width_y;
 
-					if ( (dindex+offset < d->N_cells) && (stamp_index < s->n_cells) )
+					if ( 0 <= dindex+offset && dindex+offset < d->N_cells && 0 <= stamp_index && stamp_index < s->n_cells)
 					{ 
 						d->density[dindex+offset] += s->density[stamp_index];
 					}
