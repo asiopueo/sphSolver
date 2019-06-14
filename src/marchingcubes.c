@@ -500,7 +500,7 @@ void polygonize_density(density_grid &d, std::vector<vec3> &vertices, std::vecto
 		}
 	}
 
-	cout << "vertexdata.size(): " << vertices.size() << endl;
+	//cout << "vertexdata.size(): " << vertices.size() << endl;
 }
 
 
@@ -533,7 +533,6 @@ void get_cellvertices(gridcell& cell, density_grid& d, int xn, int yn, int zn)
 }
 
 
-
 int clamp(int min, int x, int max)
 {
 	if (x <= min)
@@ -543,64 +542,4 @@ int clamp(int min, int x, int max)
 	return x;
 }
 
-
-
-
-
-/*void render_MarchingCubes(implicit_surface* v, float threshold)
-{
-	std::vector<vec3> water_vertex_data;
-	std::vector<vec3> water_normal_data;
-
-	for (i = 0; i < 8; i++)
-		cell.v[i] = &cell.vmem[i];
-
-	for ()
-		for ()
-		{
-			xn = x0 + 1;
-			yn1 = yn + 1;
-			zn1 = zn + 1;
-			set_cellvertex(cell.v[0], density, stride, width, height, xn, yn, zn);
-			set_cellvertex(cell.v[1], density,	stride, width, height, xn, yn1, zn);
-			set_cellvertex(cell.v[4], density,	stride, width, height, xn, yn, zn1);
-			set_cellvertex(cell.v[5], density,	stride, width, height, xn, yn1, zn1);
-
-			for (xn = x0 + 1; xn <= x1 - 2; xn++)
-			{
-				xn1 = xn + 1;
-
-				set_cellvertex(cell.v[2], density, stride, width, height, xn1, yn1, zn);
-				set_cellvertex(cell.v[3], density, stride, width, height, xn1, yn, zn);
-				set_cellvertex(cell.v[6], density, stride, width, height, xn1, yn1, zn1);
-				set_cellvertex(cell.v[7], density, stride, width, height, xn1, yn, zn1);
-
-				polygonize(&cell, water_vertex_data, water_normal_data, threshold);
-
-				SWAP_V(cell.v[0], cell.v[3]);
-				SWAP_V(cell.v[1], cell.v[2]);
-				SWAP_V(cell.v[4], cell.v[7]);
-				SWAP_V(cell.v[5], cell.v[6]);
-			}
-	}
-
-	// All the rendering is done here
-	GLuint waterVAO, water_vertexVBO, water_normalVBO;
-	glGenVertexArrays(1,&waterVAO);
-
-	glBindVertexArray(waterVAO);
-		glGenBuffers(1,&water_vertexVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
-		glBufferData(GL_ARRAY_BUFFER,water_vertex_data.size()*sizeof(vec3), water_vertex_data.data(), GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,0);
-		glGenBuffers(1,&water_normalVBO);
-		glBindBuffer(GL_ARRAY_BUFFER,water_normalVBO);
-		glBufferData(GL_ARRAY_BUFFER,water_normal_data.size()*sizeof(vec3), water_normal_data.data(), GL_STATIC_DRAW);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,0,0);
-		glDrawArrays(GL_TRIANGLES, 0, water_vertex_data.size()*3);
-	glBindVertexArray(0);
-
-}*/
 
