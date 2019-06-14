@@ -146,5 +146,5 @@ void alloc_density_grid(density_grid* d, vec3* pos, int n_particles, float len)
 
 	d->density = (float*) calloc(d->N_cells*sizeof(float), sizeof(float));
 
-	std::cout << "d->N_cells: " << d->N_cells << std::endl;
+	//std::cout << "d->N_cells: " << d->N_cells << std::endl;
 }

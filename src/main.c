@@ -409,7 +409,7 @@ int main(int argc, char** argv)
 
 
 	// Initialize Triangle
-	GLuint triangle_shaders = LoadShaders("shaders/triangle.vs", "shaders/triangle.fs");
+	/*GLuint triangle_shaders = LoadShaders("shaders/triangle.vs", "shaders/triangle.fs");
 
 	GLuint triangleVAO, triangleVBO, triangleColorVBO;
 	glGenVertexArrays(1,&triangleVAO);
@@ -425,7 +425,7 @@ int main(int argc, char** argv)
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_color), triangle_color, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,0,0);
-	glBindVertexArray(0);
+	glBindVertexArray(0);*/
 
 
 	std::vector<vec3> vertexdata;
@@ -467,35 +467,15 @@ int main(int argc, char** argv)
 	// Initialize simulation
 	init_sph();
 	create_nbr_list(&nbr_list);
+	// Density stamp
+	density_stamp stamp;
+	alloc_density_stamp(&stamp, 3, 3, 3, 0.1, 0.15);
 	// Density grid allocation:
 	alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1); // density_grid needs to be shift by CUBE_LEN/2 from the origin!
 	// Missing here: desity cells need volume calculation
-	density_stamp stamp;
-	alloc_density_stamp(&stamp, 3, 3, 3, 0.1, 0.15);
+
 	assign_density_to_grid(&dense, &stamp, &sph_instance);
-
-
-
-
 	polygonize_density(dense, vertexdata, normaldata, 1.5);
-	
-	// May be compactified to a function later.
-	/*for (int i=0; i<dense.width_x; i++) {
-		for (int j=0; j<dense.width_y; j++) {
-			for (int k=0; k<dense.width_z; k++) {
-				gridcell cell;
-				get_cellvertices(cell, dense, i, j, k); // stride serves as a scaling factor
-				std::swap(cell.v[2], cell.v[3]);
-				std::swap(cell.v[6], cell.v[7]);
-				polygonize_cell(&cell, vertexdata, normaldata, 1.5);
-			}
-		}
-	}
-
-	cout << "vertexdata.size(): " << vertexdata.size() << endl;*/
-
-
-
 
 
 
@@ -512,14 +492,14 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) 0);
 
 		glGenBuffers(1, &water_normalVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0], GL_STATIC_DRAW);
 		
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) 0);
 	glBindVertexArray(0);
 
 
@@ -554,11 +534,17 @@ int main(int argc, char** argv)
 	ViewMatrix = lookAt( vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 100.0f);
 
+
+
+
+
+
+
 	// Get uniform locations
 	// GLuint ModelMatrix_ID = glGetUniformLocation(water_shaders, "ModelMatrix");
 	GLuint ViewMatrix_ID = glGetUniformLocation(skybox_shaders, "ViewMatrix");
 	GLuint ProjectionMatrix_ID = glGetUniformLocation(skybox_shaders, "ProjectionMatrix");
-	GLuint MVP_ID = glGetUniformLocation(triangle_shaders, "MVP_matrix");
+	//GLuint MVP_ID = glGetUniformLocation(triangle_shaders, "MVP_matrix");
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -593,16 +579,16 @@ int main(int argc, char** argv)
 
 			glDepthMask(GL_TRUE);
 
-			// Triangle
-			glUseProgram(triangle_shaders);
-			glUniformMatrix4fv(MVP_ID, 1, GL_FALSE, &MVP_matrix[0][0]);
 			ModelMatrix = rotate(mat4(1.0f), GLfloat(CurrentTime),vec3(1.0f,1.0f,0.0f));
 			ViewMatrix = lookAt(Position, Position + DiVector, UpVector);
 			MVP_matrix = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
+			// Triangle
+			/*glUseProgram(triangle_shaders);
+			glUniformMatrix4fv(MVP_ID, 1, GL_FALSE, &MVP_matrix[0][0]);
 			glBindVertexArray(triangleVAO);
 				glDrawArrays(GL_TRIANGLES, 0, 3);
-			glBindVertexArray(0);
+			glBindVertexArray(0);*/
 
 
 			// Render water
@@ -613,20 +599,41 @@ int main(int argc, char** argv)
 			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
 			glUniform3fv(glGetUniformLocation(water_shaders, "cameraPos"), 1, &Position[0]);
 
-			glBindVertexArray(waterVAO);
-				glDrawArrays(GL_TRIANGLES, 0, sizeof(vec3) * vertexdata.size());
-			glBindVertexArray(0);
+
+
 
 
 
 			elapse();
-			//alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
-			get_pos(spritedata, &sph_instance);
+			alloc_density_grid(&dense, sph_instance.pos, sph_instance.n_particles, 0.1);
+			assign_density_to_grid(&dense, &stamp, &sph_instance);
+			
+			//vertexdata.clear();
+			//normaldata.clear();
+			//polygonize_density(dense, vertexdata, normaldata, 0.1);
+
+			GLuint positionLocation = glGetAttribLocation(water_shaders, "position");
+			GLuint normalLocation = glGetAttribLocation(water_shaders, "normal");
+
+			glBindVertexArray(waterVAO);
+				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
+				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
+				//glEnableVertexAttribArray(positionLocation);
+				//glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) 0);
+				glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
+				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
+				//glEnableVertexAttribArray(normalLocation);
+				//glVertexAttribPointer(normalLocation, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) sizeof(vertexdata));
+
+				glDrawArrays(GL_TRIANGLES, 0, sizeof(glm::vec3) * vertexdata.size());
+			glBindVertexArray(0);
 
 
 
 
 			// Sprites
+			get_pos(spritedata, &sph_instance);
+
 			glUseProgram(sprite_shaders);
 			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
 			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
@@ -640,10 +647,6 @@ int main(int argc, char** argv)
 				//glDrawArrays(GL_POINTS, 0, sizeof(glm::vec3) * vertexdata.size());
 			glBindVertexArray(0);
 			
-
-
-
-
 
 
 
