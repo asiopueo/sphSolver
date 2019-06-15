@@ -74,10 +74,6 @@ const float PI = 3.1415926535;
 
 GLFWwindow* window;
 
-float CurrentTime;
-float PastTime = 0.0f;
-
-
 // 'Dreibein' and position of the Camera
 vec3 DiVector;
 vec3 RiVector;
@@ -91,7 +87,6 @@ float zenith = PI/2.0F;
 sph_struc sph_instance;
 grid_struc grid_instance;
 neighbor_struc nbr_list;
-//render_struc render_instance;
 density_grid dense;
 
 /*************************/
@@ -113,7 +108,7 @@ void compute_matrices_from_inputs()
 	double xPos, yPos;
 	vec3 MovementDirection;
 
-	CurrentTime = glfwGetTime();
+	double currentTime = glfwGetTime();
 
 	glfwGetCursorPos(window, &xPos, &yPos);
 
@@ -314,10 +309,7 @@ int main(int argc, char** argv)
 	faces.push_back("skybox/back.jpg");
 	faces.push_back("skybox/front.jpg");
 
-	//printf("Size: %ld \n", faces.size());
-
 	GLuint skyboxTexture = loadCubemap(faces);
-
 	GLuint skybox_shaders = LoadShaders("shaders/skybox.vs", "shaders/skybox.fs");
 
 	GLuint skyboxVAO, skyboxVBO;
@@ -466,7 +458,7 @@ int main(int argc, char** argv)
 
 			glDepthMask(GL_TRUE);
 
-			ModelMatrix = rotate(mat4(1.0f), GLfloat(CurrentTime),vec3(1.0f,1.0f,0.0f));
+			ModelMatrix = rotate(mat4(1.0f), GLfloat(currentTime),vec3(1.0f,1.0f,0.0f));
 			ViewMatrix = lookAt(Position, Position + DiVector, UpVector);
 			MVP_matrix = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
