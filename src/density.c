@@ -47,9 +47,9 @@ void alloc_density_stamp(density_stamp* s, uint length, uint width, uint height,
 				float distsq = s->grid_len * sqrt( std::pow(gx-l_half, 2)+std::pow(gy-w_half, 2)+std::pow(gz-h_half, 2) );
 
 				if (distsq < radius)
-					s->density[index] = 0.1;
+					s->density[index] = 0.2;
 				else
-					s->density[index] = 0.0;
+					s->density[index] = 0.05;
 
 				//std::cout << s->density[index] << std::endl;
 			}
@@ -74,11 +74,11 @@ void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 
 		//std::cout << dindex << std::endl;
 
-		for (int gx=-l_half; gx < l_half; gx++)
+		for (int gx=-l_half; gx < l_half+1; gx++)
 		{
-			for (int gy=-w_half; gy < w_half; gy++)
+			for (int gy=-w_half; gy < w_half+1; gy++)
 			{
-				for (int gz=-h_half; gz < h_half; gz++)
+				for (int gz=-h_half; gz < h_half+1; gz++)
 				{
 					// here is still a bug:
 					int offset = gx + gy*d->width_x + gz*d->width_x*d->width_y;
@@ -145,14 +145,14 @@ void alloc_density_grid(density_grid* d, sph_struc* sph, float len)
 	d->width_z = (fmax_z-fmin_z)*d->inv_grid_len + 1 + 2*collar;
 
 	d->N_cells = d->width_x * d->width_y * d->width_z;
-	d->density = (float*) malloc(d->N_cells * sizeof(float));
 
 	if (d->density != NULL)
 	{
 		free(d->density);
 	}
 
-	d->density = (float*) calloc(d->N_cells*sizeof(float), sizeof(float));
+	d->density = (float*) calloc(d->N_cells, sizeof(float));
 
 	//std::cout << "d->N_cells: " << d->N_cells << std::endl;
+	//std::cout << "d->maxy: " << fmin_y << std::endl;
 }

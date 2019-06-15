@@ -68,7 +68,7 @@ using namespace glm;
 #define STIFF 1.0
 #define MASS 0.1
 
-#define ISO_THRESHOLD 0.1
+#define ISO_THRESHOLD 0.2
 #define ISO_RADIUS 0.0115
 #define MC_GRID_LEN 0.005
 
@@ -103,7 +103,7 @@ mat4 ModelMatrix;
 mat4 ViewMatrix;
 mat4 ProjectionMatrix;
 mat4 VP_matrix, MVP_matrix;
-int debug_counter=0;
+
 
 // SPH simulation instance
 sph_struc sph_instance;
@@ -492,13 +492,13 @@ int main(int argc, char** argv)
 	glBindVertexArray(waterVAO);
 		glGenBuffers(1, &water_vertexVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_DYNAMIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) 0);
 
 		glGenBuffers(1, &water_normalVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0], GL_DYNAMIC_DRAW);
 		
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*) 0);
@@ -601,7 +601,7 @@ int main(int argc, char** argv)
 
 
 
-
+			
 			elapse();
 			alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
 			assign_density_to_grid(&dense, &stamp, &sph_instance);
@@ -610,16 +610,20 @@ int main(int argc, char** argv)
 			normaldata.clear();
 			polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
 
+			cout << vertexdata.size() << endl;
+
 			GLuint positionLocation = glGetAttribLocation(water_shaders, "position");
 			GLuint normalLocation = glGetAttribLocation(water_shaders, "normal");
 
 			glBindVertexArray(waterVAO);
 				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
-				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_DYNAMIC_DRAW);
+				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
 				glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
-				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_DYNAMIC_DRAW);
+				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
 
-				glDrawArrays(GL_TRIANGLES, 0, sizeof(glm::vec3) * vertexdata.size());
+				glDrawArrays(GL_TRIANGLES, 0, vertexdata.size());
 			glBindVertexArray(0);
 
 
@@ -636,7 +640,7 @@ int main(int argc, char** argv)
 				glBindBuffer(GL_ARRAY_BUFFER, sprite_vertexVBO);
 				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0]);
 				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
-				glDrawArrays(GL_POINTS, 0, sizeof(vec3) * sph_instance.n_particles);
+				glDrawArrays(GL_POINTS, 0, sph_instance.n_particles);
 				//glDrawArrays(GL_POINTS, 0, sizeof(glm::vec3) * vertexdata.size());
 			glBindVertexArray(0);
 			
