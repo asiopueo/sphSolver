@@ -481,14 +481,14 @@ void polygonize_cell(gridcell* cell, std::vector<vec3> &vertex_data, std::vector
 
 void polygonize_density(density_grid &d, std::vector<vec3> &vertices, std::vector<vec3> &normals, float isolevel)
 {
-	for (int i=0; i<d.width_x; i++) {
-		for (int j=0; j<d.width_y; j++) {
-			for (int k=0; k<d.width_z; k++) {
+	for (int i=0; i<d.width_x-1; i++) {
+		for (int j=0; j<d.width_y-1; j++) {
+			for (int k=0; k<d.width_z-1; k++) {
 				gridcell cell;
 				get_cellvertices(cell, d, i, j, k); // stride serves as a scaling factor
 				std::swap(cell.v[2], cell.v[3]);
 				std::swap(cell.v[6], cell.v[7]);
-				polygonize_cell(&cell, vertices, normals, 1.5);
+				polygonize_cell(&cell, vertices, normals, isolevel);
 			}
 		}
 	}

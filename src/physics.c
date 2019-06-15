@@ -22,15 +22,25 @@ using namespace std;
 #define R_LEN 4
 #define R_HEIGHT 13
 
-#define CUBE_LEN_X 10
-#define CUBE_LEN_Y 10
-#define CUBE_LEN_Z 10
-#define SCAL_LEN 0.1f
+
+// Definition of constants
+#define SMOOTHING_LENGTH 0.05 // Ein wenig länger als der initiale Teilchenabstand.
+#define VISCOSITY 0.1
+#define MASS 0.1
+#define STIFF 1.0
+#define SEARCH_RADIUS (SMOOTHING_LENGTH)
+#define TIME_STEP 0.0001  // TIME_STEP has influence on the stability of the program.
+
+
+#define SCAL_LEN 0.1
 #define N_PARTICLES (CUBE_LEN_X*CUBE_LEN_Y*CUBE_LEN_Z)
+#define EPSILON 0.05
+
+
+
 
 
 const float PI = 3.1415926535f;
-
 
 
 
@@ -41,21 +51,19 @@ void get_pos(vec3* pos, sph_struc* sph)
 	memcpy(pos, sph->pos, sph->n_particles*sizeof(vec3));
 }
 
-
-void create_sph_instance(sph_struc* sph, int size, vec3* pos, vec3* vel,
-			   float h, float viscosity, float mass, float stiff, float r_search, float t)
+void create_sph_instance(sph_struc* sph, int size, vec3* pos, vec3* vel)
 {
-	sph->viscosity = viscosity;
+	sph->viscosity = VISCOSITY;
 	sph->n_particles = size;
-	sph->smoothlen = h;
-	sph->stiff = stiff;
+	sph->smoothlen = SMOOTHING_LENGTH;
+	sph->stiff = STIFF;
 
-	sph->timestep = t;
+	sph->timestep = TIME_STEP;
 
-	sph->r_search = r_search;
+	sph->r_search = SEARCH_RADIUS;
 
 	// Allocate memory for attributes of particles
-	sph->mass = mass;
+	sph->mass = MASS;
 	sph->density = new float[size];
 	sph->pos = new vec3[size];
 	sph->vel = new vec3[size];
@@ -142,7 +150,7 @@ void compute_density(sph_struc* sph, neighbor_struc* nbr_list)
 	{
 		for (j = 0; j < nbr_list->utilization[i]; j++)
 		{
-			float distsq = nbr_list->n_matrix[N_PARTICLES*i+j].distsq;
+			float distsq = nbr_list->n_matrix[sph->n_particles*i+j].distsq;
 
 			sph->density[i] += sph->mass * W_poly6(distsq, sph->r_search);
 		}
@@ -166,7 +174,7 @@ void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
 			float p_pressure, n_pressure;
 			vec3 vec_r;
 
-			nbr_index = nbr_list->n_matrix[N_PARTICLES*i+j].index;
+			nbr_index = nbr_list->n_matrix[sph->n_particles*i+j].index;
 			vec_r = sph->pos[i] - sph->pos[nbr_index];
 
 			//cout << "p: " << i << "\t n: " << j << endl;

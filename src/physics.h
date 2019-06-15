@@ -19,7 +19,7 @@ typedef struct
 
 
 
-
+void create_sph_instance(sph_struc* sph, int size, vec3* pos, vec3* vel);
 void create_sph_instance(sph_struc* sph, int size, vec3* pos, vec3* vel,
 						 float smoothlen, float viscosity, float mass, float stiff, float search_radius, float timesteps);
 void get_pos(vec3* pos, sph_struc* sph);

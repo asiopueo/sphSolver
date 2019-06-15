@@ -53,25 +53,14 @@ using namespace glm;
 #include "modeldata.h"
 
 
-
 // Definition of constants
-#define SMOOTHING_LENGTH 0.05 // Ein wenig länger als der initiale Teilchenabstand.
-#define SEARCH_RADIUS (SMOOTHING_LENGTH)
 #define CUBE_LEN_X 10
 #define CUBE_LEN_Y 10
 #define CUBE_LEN_Z 10
-#define SCAL_LEN 0.1
 #define N_PARTICLES (CUBE_LEN_X*CUBE_LEN_Y*CUBE_LEN_Z)
-#define TIME_STEP 0.0001  // TIME_STEP has influence on the stability of the program.
-#define EPSILON 0.05
-#define VISCOSITY 0.1
-#define STIFF 1.0
-#define MASS 0.1
+#define SCAL_LEN 0.1
 
-#define ISO_THRESHOLD 0.2
-#define ISO_RADIUS 0.0115
-#define MC_GRID_LEN 0.005
-
+#define ISO_THRESHOLD 0.15
 #define DENSITY_RES 0.1
 
 const float PI = 3.1415926535;
@@ -256,25 +245,26 @@ void render_text(GLint freetype_shdrs, const char *text, float x, float y, float
 
 
 // Initialize the states of particles
-void init_sph(void)
+void init_sph(int length, int width, int height, int n_particles)
 {
-	vec3 pos[N_PARTICLES];
-	vec3 vel[N_PARTICLES];
+	vec3 pos[n_particles];
+	vec3 vel[n_particles];
 
 	mat4 rot;
 	mat4 rotview;
 
-	for (int x = 0; x < CUBE_LEN_X; x++)
-		for (int y = 0; y < CUBE_LEN_Y; y++)
-			for (int z = 0; z < CUBE_LEN_Z; z++)
+	for (int x = 0; x < length; x++)
+		for (int y = 0; y < width; y++)
+			for (int z = 0; z < height; z++)
 			{
-				int i = x + y*CUBE_LEN_X + z*CUBE_LEN_X*CUBE_LEN_Y;
-				pos[i] = vec3(SCAL_LEN*(x + RANDF() - CUBE_LEN_X/2), SCAL_LEN*(y + RANDF() - CUBE_LEN_Y/2), SCAL_LEN*(z + RANDF() - CUBE_LEN_Z/2));
+				int i = x + y*length + z*length*width;
+				pos[i] = vec3(SCAL_LEN*(x + RANDF() - length/2), SCAL_LEN*(y + RANDF() - width/2), SCAL_LEN*(z + RANDF() - height/2));
 				vel[i] = vec3(0.0f, 0.0f, 0.0f);
 			}
 
-	create_sph_instance(&sph_instance, N_PARTICLES, pos, vel, SMOOTHING_LENGTH, VISCOSITY, MASS, STIFF, SEARCH_RADIUS, TIME_STEP);
+	create_sph_instance(&sph_instance, n_particles, pos, vel);
 }
+
 
 
 
@@ -467,7 +457,7 @@ int main(int argc, char** argv)
 
 
 	// Initialize simulation
-	init_sph();
+	init_sph(CUBE_LEN_X, CUBE_LEN_Y, CUBE_LEN_Z, N_PARTICLES);
 	create_nbr_list(&nbr_list);
 	// Density stamp
 	density_stamp stamp;
@@ -525,8 +515,8 @@ int main(int argc, char** argv)
 
 	// Initialize Camera
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 10.0f);
-	Position = vec3(0.0f, 0.0f, 0.0f);
-	azimuth = 0.0f;
+	Position = vec3(-3.0f, 0.0f, 0.0f);
+	azimuth = PI/2.;
 	zenith = PI/2.0f;
 
 	// Initialize Matrices
@@ -547,7 +537,7 @@ int main(int argc, char** argv)
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-	glEnable(GL_CULL_FACE); // Need to fix the 'cull' for the fonts
+	//glEnable(GL_CULL_FACE); // Need to fix the 'cull' for the fonts
 	glPointSize(4.0f);
 
 
@@ -610,7 +600,7 @@ int main(int argc, char** argv)
 			normaldata.clear();
 			polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
 
-			cout << vertexdata.size() << endl;
+			//cout << vertexdata.size() << endl;
 
 			GLuint positionLocation = glGetAttribLocation(water_shaders, "position");
 			GLuint normalLocation = glGetAttribLocation(water_shaders, "normal");
