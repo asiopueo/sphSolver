@@ -36,9 +36,7 @@ using namespace glm;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-
 #include <vector>
-
 
 // Project-specific includes
 #include "memory.h"
@@ -47,6 +45,7 @@ using namespace glm;
 #include "loader.h"
 #include "density.h"
 #include "marchingcubes.h"
+#include "renderer.h"
 
 
 // Model data
@@ -78,20 +77,14 @@ GLFWwindow* window;
 float CurrentTime;
 float PastTime = 0.0f;
 
-float azimuth = 0.0f;	// Note that glm interpretes the angles as rad.
-float zenith = PI/2.0F;
 
-// 'Dreibein' of the Camera
+// 'Dreibein' and position of the Camera
 vec3 DiVector;
 vec3 RiVector;
 vec3 UpVector;
-
 vec3 Position;
-
-mat4 ModelMatrix;
-mat4 ViewMatrix;
-mat4 ProjectionMatrix;
-mat4 VP_matrix, MVP_matrix;
+float azimuth = 0.0f;	// Note that glm interpretes the angles as rad.
+float zenith = PI/2.0F;
 
 
 // SPH simulation instance
@@ -100,18 +93,12 @@ grid_struc grid_instance;
 neighbor_struc nbr_list;
 //render_struc render_instance;
 density_grid dense;
-vec3* vertexdata;
-vec3* normaldata;
 
-// Texture
-GLuint cubemap_tex;
-
-// FreeType
-FT_Library library;
-FT_Face face;
 
 
 /*************************/
+
+
 
 
 
@@ -169,82 +156,25 @@ void compute_matrices_from_inputs()
 }
 
 
-
-void render_text(GLint freetype_shdrs, const char *text, float x, float y, float sx, float sy)
+void init_FreeType(FT_Library &library, FT_Face &face)
 {
-	const char *p;
-
-	FT_GlyphSlot g = face->glyph;
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glUseProgram(freetype_shdrs);
-
-	/* Create a texture that will be used to hold one "glyph" */
-	GLuint tex, text_vbo, text_vao;
-	glGenVertexArrays(1,&text_vao);
-	
-	glActiveTexture(GL_TEXTURE1);
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-
-	GLuint uniform_tex;
-	uniform_tex = glGetUniformLocation(freetype_shdrs, "text");
-	glUniform1i(uniform_tex, 1);
-
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
-	glBindVertexArray(text_vao);
-	glEnableVertexAttribArray(0);
-	glGenBuffers(1,&text_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, text_vbo);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
-	for(p = text; *p; p++) 
-	{
-		if(FT_Load_Char(face, *p, FT_LOAD_RENDER))
-			continue;
-
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RED, g->bitmap.width, g->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, g->bitmap.buffer);
-
-		float x2 = x + g->bitmap_left * sx;
-		float y2 = -y - g->bitmap_top * sy;
-		float w = g->bitmap.width * sx;
-		float h = g->bitmap.rows * sy;
-		
-		// First two components are screen coordinates, the last two are uv-coordinates.
-		GLfloat box[4][4] = {
-			{x2,     -y2    , 0.0f, 0.0f},
-			{x2 + w, -y2    , 1.0f, 0.0f},
-			{x2,     -y2 - h, 0.0f, 1.0f},
-			{x2 + w, -y2 - h, 1.0f, 1.0f}
-		};
-		
-		glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_STATIC_DRAW);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		//glDrawArrays(GL_POINTS, 0, 4);
-
-		x += (g->advance.x/64.0f) * sx;
-		y += (g->advance.y/64.0f) * sy;
+	if(FT_Init_FreeType(&library)) {
+	  fprintf(stderr, "Could not init FreeType library\n");
+	  exit(1);
 	}
 
-	glDisable(GL_BLEND);
-	glDisableVertexAttribArray(0);
-	glBindVertexArray(0);
-	glDeleteTextures(1, &tex);
+	if(FT_New_Face(library, "fonts/FreeSans.ttf", 0, &face)) {
+	  fprintf(stderr, "Could not open font\n");
+	  exit(1);
+	}
+
+	FT_Set_Pixel_Sizes(face, 0, 24);	
 }
 
 
 
-void init_test_cube(std::vector<float> &vertexdata, std::vector<float> &normaldata)
+
+/*void init_test_cube(std::vector<vec3> &vertexdata, std::vector<vec3> &normaldata)
 {
 	// Create density grid:
 	int edge = 20;
@@ -267,11 +197,11 @@ void init_test_cube(std::vector<float> &vertexdata, std::vector<float> &normalda
 				get_cellvertices(cell, density, 0.1, edge+2, edge+2, i, j, k); // stride serves as a scaling factor
 				std::swap(cell.v[2], cell.v[3]);
 				std::swap(cell.v[6], cell.v[7]);
-				polygonize_cell(&cell, vertexdata, normaldata, 1.0);
+				
 			}
 		}
 	}
-}
+}*/
 
 
 
@@ -358,6 +288,17 @@ void getFramerate(double* lastTime, int* nbFrames)
 
 int main(int argc, char** argv) 
 {
+	mat4 ModelMatrix;
+	mat4 ViewMatrix;
+	mat4 ProjectionMatrix;
+	mat4 VP_matrix, MVP_matrix;
+
+	
+	// FreeType
+	FT_Library library;
+	FT_Face face;
+
+
 	if ( !glfwInit() )
 	{
 		fprintf( stderr, "Failed to initialize GLFW\n" );
@@ -387,17 +328,7 @@ int main(int argc, char** argv)
 
 
 	// Initialize FreeType
-	if(FT_Init_FreeType(&library)) {
-	  fprintf(stderr, "Could not init FreeType library\n");
-	  return 1;
-	}
-
-	if(FT_New_Face(library, "fonts/FreeSans.ttf", 0, &face)) {
-	  fprintf(stderr, "Could not open font\n");
-	  return 1;
-	}
-
-	FT_Set_Pixel_Sizes(face, 0, 24);
+	init_FreeType(library, face);
 
 	GLuint freetype_shaders = LoadShaders("shaders/freetype.vs", "shaders/freetype.fs");
 
@@ -433,7 +364,7 @@ int main(int argc, char** argv)
 
 
 	// Initialize Triangle
-	/*GLuint triangle_shaders = LoadShaders("shaders/triangle.vs", "shaders/triangle.fs");
+	GLuint triangle_shaders = LoadShaders("shaders/triangle.vs", "shaders/triangle.fs");
 
 	GLuint triangleVAO, triangleVBO, triangleColorVBO;
 	glGenVertexArrays(1,&triangleVAO);
@@ -449,7 +380,7 @@ int main(int argc, char** argv)
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_color), triangle_color, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,0,0);
-	glBindVertexArray(0);*/
+	glBindVertexArray(0);
 
 
 	std::vector<vec3> vertexdata;
@@ -459,7 +390,7 @@ int main(int argc, char** argv)
 	
 
 
-	init_test_cube(vertexdata, normaldata);
+	//init_test_cube(vertexdata, normaldata);
 
 	// Initialize simulation
 	init_sph(CUBE_LEN_X, CUBE_LEN_Y, CUBE_LEN_Z, N_PARTICLES);
@@ -531,13 +462,9 @@ int main(int argc, char** argv)
 
 
 
-
-
 	// Get uniform locations
-	// GLuint ModelMatrix_ID = glGetUniformLocation(water_shaders, "ModelMatrix");
 	GLuint ViewMatrix_ID = glGetUniformLocation(skybox_shaders, "ViewMatrix");
 	GLuint ProjectionMatrix_ID = glGetUniformLocation(skybox_shaders, "ProjectionMatrix");
-	//GLuint MVP_ID = glGetUniformLocation(triangle_shaders, "MVP_matrix");
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -577,12 +504,7 @@ int main(int argc, char** argv)
 			MVP_matrix = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 			// Triangle
-			/*glUseProgram(triangle_shaders);
-			glUniformMatrix4fv(MVP_ID, 1, GL_FALSE, &MVP_matrix[0][0]);
-			glBindVertexArray(triangleVAO);
-				glDrawArrays(GL_TRIANGLES, 0, 3);
-			glBindVertexArray(0);*/
-
+			//render_triangle(triangle_shaders, MVP_matrix, triangleVAO);
 
 			// Render water
 			glUseProgram(water_shaders);
@@ -642,13 +564,11 @@ int main(int argc, char** argv)
 
 
 
-
-
 			// Text rendering (experimental)
 			float sx = 2.0 / 1024;	// Needs to be changed later.
 			float sy = 2.0 / 768;
 			
-			render_text(freetype_shaders, "Bubo 2000", -1 + 24 * sx,   1 - 50 * sy,    sx, sy);
+			render_text(freetype_shaders, "Bubo 2000", -1 + 24 * sx,   1 - 50 * sy,    sx, sy, library, face);
 
 
 			// FPS-counter
@@ -664,7 +584,7 @@ int main(int argc, char** argv)
 				nbFrames = 0;
 				lastTime += 1.0;
 			}
-			render_text(freetype_shaders, fps, -1 + 24 * sx, 1 - 100 * sy, sx, sy);
+			render_text(freetype_shaders, fps, -1 + 24 * sx, 1 - 100 * sy, sx, sy, library, face);
 			
 			glfwSwapBuffers(window);
 			glfwPollEvents();
