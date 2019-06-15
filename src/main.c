@@ -234,16 +234,17 @@ void elapse(void)
 
 
 
-void getFramerate(double* lastTime, int* nbFrames)
+void getFramerate(char* fps, double &lastTime, int &nbFrames)
 {
 	double currentTime = glfwGetTime();
-	(*nbFrames)++;
-	if ( currentTime - *lastTime >= 1.0 )
+	nbFrames++;
+	if ( currentTime - lastTime >= 1.0 )
 	{
+		sprintf(fps, "%3.0f ms/frame", 1000.0f/float(nbFrames));
 		//cout << 1000.0f/double(*nbFrames) << "milliseconds/frame \n";
 		//cout << "Number of frames: " << *nbFrames << "\n";
-		*nbFrames = 0;
-		*lastTime += 1.0;
+		nbFrames = 0;
+		lastTime += 1.0;
 	}
 }
 
@@ -493,25 +494,12 @@ int main(int argc, char** argv)
 			
 
 
-			// Rendering text
+			// Render text
 			float sx = 2.0 / 1024;	// Needs to be changed later.
 			float sy = 2.0 / 768;
 			
 			render_text(freetype_shaders, "Bubo 2000", -1 + 24 * sx,   1 - 50 * sy,    sx, sy, library, face);
-
-			// FPS-counter
-			//getFramerate(&lastTime, &nbFrames);
-			currentTime = glfwGetTime();
-			nbFrames++;
-			if ( currentTime - lastTime >= 1.0 )
-			{
-				sprintf(fps, "%3.0f ms/frame", 1000.0f/float(nbFrames));
-				
-				//cout << 1000.0f/double(*nbFrames) << "milliseconds/frame \n";
-				//cout << "Number of frames: " << *nbFrames << "\n";
-				nbFrames = 0;
-				lastTime += 1.0;
-			}
+			getFramerate(fps, lastTime, nbFrames); // get framerate
 			render_text(freetype_shaders, fps, -1 + 24 * sx, 1 - 100 * sy, sx, sy, library, face);
 			
 			/*END OF RENDERING STAGE**************************/
