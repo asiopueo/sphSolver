@@ -257,7 +257,6 @@ int main(int argc, char** argv)
 	mat4 ModelMatrix;
 	mat4 ViewMatrix;
 	mat4 ProjectionMatrix;
-	mat4 VP_matrix, MVP_matrix;
 
 	
 	// FreeType
@@ -328,17 +327,17 @@ int main(int argc, char** argv)
 	// Initialize Triangle
 	GLuint triangle_shaders = LoadShaders("shaders/triangle.vs", "shaders/triangle.fs");
 
-	GLuint triangleVAO, triangleVBO, triangleColorVBO;
+	GLuint triangleVAO, triangle_vertexVBO, triangle_colorVBO;
 	glGenVertexArrays(1,&triangleVAO);
 
 	glBindVertexArray(triangleVAO);
-		glGenBuffers(1, &triangleVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+		glGenBuffers(1, &triangle_vertexVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, triangle_vertexVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_data), triangle_data, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,0);
-		glGenBuffers(1, &triangleColorVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, triangleColorVBO);
+		glGenBuffers(1, &triangle_colorVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, triangle_colorVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_color), triangle_color, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,0,0);
@@ -460,10 +459,9 @@ int main(int argc, char** argv)
 
 			ModelMatrix = rotate(mat4(1.0f), GLfloat(currentTime),vec3(1.0f,1.0f,0.0f));
 			ViewMatrix = lookAt(Position, Position + DiVector, UpVector);
-			MVP_matrix = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 			// Triangle
-			//render_triangle(triangle_shaders, MVP_matrix, triangleVAO);
+			//render_triangle(triangle_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, triangleVAO);
 
 			// Render water
 			glUseProgram(water_shaders);

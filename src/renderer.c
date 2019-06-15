@@ -20,10 +20,12 @@ using namespace glm;
 
 
 
-void render_triangle(GLuint shaders, glm::mat4 MVP_matrix, GLuint triangleVAO)
+void render_triangle(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatrix, glm::mat4 ProjectionMatrix, GLuint triangleVAO)
 {
 	glUseProgram(shaders);
-	glUniformMatrix4fv(glGetUniformLocation(shaders, "MVP_matrix"), 1, GL_FALSE, &MVP_matrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaders, "ModelMatrix"), 1, GL_FALSE, &ModelMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
 	glBindVertexArray(triangleVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	glBindVertexArray(0);	
