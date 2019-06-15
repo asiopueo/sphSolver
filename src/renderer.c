@@ -31,42 +31,24 @@ void render_triangle(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatrix
 	glBindVertexArray(0);	
 }
 
-/*void render_sprites(GLuint shaders)
+
+void render_water(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatrix, glm::mat4 ProjectionMatrix, glm::vec3 Position, GLuint vertexVbo, GLuint normalVbo, GLuint vao, int size)
 {
 	glUseProgram(shaders);
-	glUniformMatrix4fv(glGetUniformLocation(shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
-	glUniform3fv(glGetUniformLocation(shaders, "cameraPos"), 1, &Position[0]);
-
-	glBindVertexArray(spriteVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, sprite_vertexVBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0]);
-		//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
-		glDrawArrays(GL_POINTS, 0, sph_instance.n_particles);
-		//glDrawArrays(GL_POINTS, 0, sizeof(glm::vec3) * vertexdata.size());
-	glBindVertexArray(0);
-}
-
-void render_water(GLuint shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, Position, waterVAO)
-{
-	glUseProgram(shaders);
-	ModelMatrix = mat4(1.0f);
 	glUniformMatrix4fv(glGetUniformLocation(shaders, "ModelMatrix"), 1, GL_FALSE, &ModelMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
 	glUniform3fv(glGetUniformLocation(shaders, "cameraPos"), 1, &Position[0]);
 
-	glBindVertexArray(waterVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_DYNAMIC_DRAW);
-		//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
-		glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_DYNAMIC_DRAW);
-		//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
+	//GLuint positionLocation = glGetAttribLocation(water_shaders, "position");
+	//GLuint normalLocation = glGetAttribLocation(water_shaders, "normal");
 
-		glDrawArrays(GL_TRIANGLES, 0, vertexdata.size());
+	glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexVbo);
+		glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
+		glDrawArrays(GL_TRIANGLES, 0, size);
 	glBindVertexArray(0);
-}*/
+}
 
 
 void render_text(GLint freetype_shdrs, const char *text, float x, float y, float sx, float sy, FT_Library library, FT_Face face)

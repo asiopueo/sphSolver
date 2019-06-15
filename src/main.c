@@ -453,16 +453,8 @@ int main(int argc, char** argv)
 
 
 			// Render water
-			glUseProgram(water_shaders);
 			ModelMatrix = mat4(1.0f);
-			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ModelMatrix"), 1, GL_FALSE, &ModelMatrix[0][0]);
-			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
-			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
-			glUniform3fv(glGetUniformLocation(water_shaders, "cameraPos"), 1, &Position[0]);
-
-			GLuint positionLocation = glGetAttribLocation(water_shaders, "position");
-			GLuint normalLocation = glGetAttribLocation(water_shaders, "normal");
-
+			
 			glBindVertexArray(waterVAO);
 				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
 				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_DYNAMIC_DRAW);
@@ -470,11 +462,9 @@ int main(int argc, char** argv)
 				glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
 				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_DYNAMIC_DRAW);
 				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
-
-				glDrawArrays(GL_TRIANGLES, 0, vertexdata.size());
 			glBindVertexArray(0);
 
-
+			render_water(water_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, Position, water_vertexVBO, water_normalVBO, waterVAO, vertexdata.size());
 
 			// Render water particles
 			get_pos(spritedata, &sph_instance);
