@@ -141,6 +141,23 @@ void render_text(GLint freetype_shdrs, const char *text, float x, float y, float
 	glDeleteTextures(1, &tex);
 }
 
+void render_skybox(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatrix, glm::mat4 ProjectionMatrix, GLuint skyboxVAO, GLuint skyboxTexture)
+{
+	glDepthMask(GL_FALSE);
+	glUseProgram(shaders);
+
+	GLuint ViewMatrix_ID = glGetUniformLocation(shaders, "ViewMatrix");
+	GLuint ProjectionMatrix_ID = glGetUniformLocation(shaders, "ProjectionMatrix");
+
+	glUniformMatrix4fv(ViewMatrix_ID, 1, GL_FALSE, &ViewMatrix[0][0]);
+	glUniformMatrix4fv(ProjectionMatrix_ID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+
+	glBindVertexArray(skyboxVAO);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthMask(GL_TRUE);
+}
 
 void render()
 {

@@ -414,15 +414,8 @@ int main(int argc, char** argv)
 	zenith = PI/2.0f;
 
 	// Initialize Matrices
-	ModelMatrix = mat4(1.0f);
-	ViewMatrix = lookAt( vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 100.0f);
 
-
-
-	// Get uniform locations
-	GLuint ViewMatrix_ID = glGetUniformLocation(skybox_shaders, "ViewMatrix");
-	GLuint ProjectionMatrix_ID = glGetUniformLocation(skybox_shaders, "ProjectionMatrix");
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -440,28 +433,23 @@ int main(int argc, char** argv)
 
 	do {
 			compute_matrices_from_inputs();
+			
+
+			/*BEGINNING OF RENDERING STAGE**************************/
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// Skybox
-			glDepthMask(GL_FALSE);
 
-			glUseProgram(skybox_shaders);
-			ViewMatrix = lookAt(vec3(0.0f), DiVector, UpVector);
-			glUniformMatrix4fv(ViewMatrix_ID, 1, GL_FALSE, &ViewMatrix[0][0]);
-			glUniformMatrix4fv(ProjectionMatrix_ID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+			// Render skybox
+			ViewMatrix = lookAt(vec3(0.0f), DiVector, UpVector); // Ensure that the skybox is rendered from the middle of the box
+			render_skybox(skybox_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, skyboxVAO, skyboxTexture);
+		
 
-			glBindVertexArray(skyboxVAO);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-			glBindVertexArray(0);
 
-			glDepthMask(GL_TRUE);
-
-			ModelMatrix = rotate(mat4(1.0f), GLfloat(currentTime),vec3(1.0f,1.0f,0.0f));
-			ViewMatrix = lookAt(Position, Position + DiVector, UpVector);
-
-			// Triangle
+			// Render triangle
+			ViewMatrix = lookAt(Position, Position + DiVector, UpVector); 
+			//ModelMatrix = rotate(mat4(1.0f), GLfloat(currentTime),vec3(1.0f,1.0f,0.0f));
 			//render_triangle(triangle_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, triangleVAO);
+
 
 			// Render water
 			glUseProgram(water_shaders);
@@ -470,21 +458,6 @@ int main(int argc, char** argv)
 			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
 			glUniformMatrix4fv(glGetUniformLocation(water_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
 			glUniform3fv(glGetUniformLocation(water_shaders, "cameraPos"), 1, &Position[0]);
-
-
-
-
-
-			
-			elapse();
-			alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
-			assign_density_to_grid(&dense, &stamp, &sph_instance);
-			
-			vertexdata.clear();
-			normaldata.clear();
-			polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
-
-			//cout << vertexdata.size() << endl;
 
 			GLuint positionLocation = glGetAttribLocation(water_shaders, "position");
 			GLuint normalLocation = glGetAttribLocation(water_shaders, "normal");
@@ -502,7 +475,7 @@ int main(int argc, char** argv)
 
 
 
-			// Sprites
+			// Render water particles
 			get_pos(spritedata, &sph_instance);
 
 			glUseProgram(sprite_shaders);
@@ -520,13 +493,11 @@ int main(int argc, char** argv)
 			
 
 
-
-			// Text rendering (experimental)
+			// Rendering text
 			float sx = 2.0 / 1024;	// Needs to be changed later.
 			float sy = 2.0 / 768;
 			
 			render_text(freetype_shaders, "Bubo 2000", -1 + 24 * sx,   1 - 50 * sy,    sx, sy, library, face);
-
 
 			// FPS-counter
 			//getFramerate(&lastTime, &nbFrames);
@@ -543,6 +514,20 @@ int main(int argc, char** argv)
 			}
 			render_text(freetype_shaders, fps, -1 + 24 * sx, 1 - 100 * sy, sx, sy, library, face);
 			
+			/*END OF RENDERING STAGE**************************/
+
+
+			// Elapse simulation
+			elapse();
+			alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
+			assign_density_to_grid(&dense, &stamp, &sph_instance);
+			
+			vertexdata.clear();
+			normaldata.clear();
+			polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
+
+			//cout << vertexdata.size() << endl;
+
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
