@@ -159,6 +159,20 @@ void render_skybox(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatrix, 
 	glDepthMask(GL_TRUE);
 }
 
+void render_particles(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatrix, glm::mat4 ProjectionMatrix, glm::vec3 Position, GLuint vertexVBO, GLuint vao, int n_particles)
+{
+	glUseProgram(shaders);
+	glUniformMatrix4fv(glGetUniformLocation(shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
+	glUniform3fv(glGetUniformLocation(shaders, "cameraPos"), 1, &Position[0]);
+
+	glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+		glDrawArrays(GL_POINTS, 0, n_particles);
+		//glDrawArrays(GL_POINTS, 0, sizeof(glm::vec3) * vertexdata.size());
+	glBindVertexArray(0);
+}
+
 void render()
 {
 

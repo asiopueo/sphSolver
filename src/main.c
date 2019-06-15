@@ -479,19 +479,14 @@ int main(int argc, char** argv)
 			// Render water particles
 			get_pos(spritedata, &sph_instance);
 
-			glUseProgram(sprite_shaders);
-			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ViewMatrix"), 1, GL_FALSE, &ViewMatrix[0][0]);
-			glUniformMatrix4fv(glGetUniformLocation(sprite_shaders, "ProjectionMatrix"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
-			glUniform3fv(glGetUniformLocation(sprite_shaders, "cameraPos"), 1, &Position[0]);
-
 			glBindVertexArray(spriteVAO);
 				glBindBuffer(GL_ARRAY_BUFFER, sprite_vertexVBO);
 				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0]);
 				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
-				glDrawArrays(GL_POINTS, 0, sph_instance.n_particles);
-				//glDrawArrays(GL_POINTS, 0, sizeof(glm::vec3) * vertexdata.size());
 			glBindVertexArray(0);
-			
+
+			render_particles(sprite_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, Position, sprite_vertexVBO, spriteVAO, sph_instance.n_particles);
+
 
 
 			// Render text
