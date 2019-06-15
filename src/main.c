@@ -244,6 +244,38 @@ void render_text(GLint freetype_shdrs, const char *text, float x, float y, float
 
 
 
+void init_test_cube(std::vector<float> &vertexdata, std::vector<float> &normaldata)
+{
+	// Create density grid:
+	int edge = 20;
+	int border = 2;	
+	float density[(edge+2)*(edge+2)*(edge+2)];
+
+	for (int i=0; i<(edge+2)*(edge+2)*(edge+2); i++)
+		density[i] = 0.0;
+
+	// Initialize values:
+	for (int i=2+border; i<edge-border; i++)
+		for (int j=2+border; j<edge-border; j++)
+			for (int k=2+border; k<edge-border; k++)
+				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 10.0;
+	
+	for (int i=1; i<edge+1; i++) {
+		for (int j=1; j<edge+1; j++) {
+			for (int k=1; k<edge+1; k++) {
+				gridcell cell;
+				get_cellvertices(cell, density, 0.1, edge+2, edge+2, i, j, k); // stride serves as a scaling factor
+				std::swap(cell.v[2], cell.v[3]);
+				std::swap(cell.v[6], cell.v[7]);
+				polygonize_cell(&cell, vertexdata, normaldata, 1.0);
+			}
+		}
+	}
+}
+
+
+
+
 // Initialize the states of particles
 void init_sph(int length, int width, int height, int n_particles)
 {
@@ -424,37 +456,10 @@ int main(int argc, char** argv)
 	std::vector<vec3> normaldata;
 
 
-	// Create density grid:
-	/* Testcube
-	int edge = 20;
-	int border = 2;	
-	float density[(edge+2)*(edge+2)*(edge+2)];
-
-	for (int i=0; i<(edge+2)*(edge+2)*(edge+2); i++)
-		density[i] = 0.0;
-
-	// Initialize values:
-	for (int i=2+border; i<edge-border; i++)
-		for (int j=2+border; j<edge-border; j++)
-			for (int k=2+border; k<edge-border; k++)
-				density[i+j*(edge+2)+k*(edge+2)*(edge+2)] = 10.0;
 	
 
-	// Testcube
-	for (int i=1; i<edge+1; i++)
-		for (int j=1; j<edge+1; j++)
-			for (int k=1; k<edge+1; k++) {
-				gridcell cell;
-				get_cellvertices(cell, density, 0.1, edge+2, edge+2, i, j, k); // stride serves as a scaling factor
-				std::swap(cell.v[2], cell.v[3]);
-				std::swap(cell.v[6], cell.v[7]);
-				polygonize_cell(&cell, vertexdata, normaldata, 1.0);
-			}
 
-	cout << "Number of vertices: " << vertexdata.size() << endl;
-	*/
-
-
+	init_test_cube(vertexdata, normaldata);
 
 	// Initialize simulation
 	init_sph(CUBE_LEN_X, CUBE_LEN_Y, CUBE_LEN_Z, N_PARTICLES);
