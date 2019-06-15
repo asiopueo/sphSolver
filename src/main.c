@@ -42,7 +42,7 @@ using namespace glm;
 #include "memory.h"
 #include "common.h"
 #include "physics.h"
-#include "loader.h"
+#include "shaderLoader.h"
 #include "density.h"
 #include "marchingcubes.h"
 #include "renderer.h"
@@ -93,8 +93,6 @@ grid_struc grid_instance;
 neighbor_struc nbr_list;
 //render_struc render_instance;
 density_grid dense;
-
-
 
 /*************************/
 
@@ -238,8 +236,6 @@ void elapse(void)
 }
 
 
-
-
 GLuint loadCubemap(vector<const GLchar*> faces)
 {
 	GLuint textureID;
@@ -282,6 +278,8 @@ void getFramerate(double* lastTime, int* nbFrames)
 		*lastTime += 1.0;
 	}
 }
+
+
 
 
 
@@ -329,7 +327,6 @@ int main(int argc, char** argv)
 
 	// Initialize FreeType
 	init_FreeType(library, face);
-
 	GLuint freetype_shaders = LoadShaders("shaders/freetype.vs", "shaders/freetype.fs");
 
 
@@ -385,9 +382,6 @@ int main(int argc, char** argv)
 
 	std::vector<vec3> vertexdata;
 	std::vector<vec3> normaldata;
-
-
-	
 
 
 	//init_test_cube(vertexdata, normaldata);

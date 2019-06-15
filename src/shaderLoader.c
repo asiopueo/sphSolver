@@ -16,7 +16,7 @@ using namespace std;
 
 
 // Project-specific headers
-#include "loader.h"
+#include "shaderLoader.h"
 
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path){
 
