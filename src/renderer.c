@@ -13,7 +13,31 @@ using namespace glm;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <vector>
 #include "renderer.h"
+
+
+// Constructor
+Object::Object()
+{
+	glGenVertexArrays(1,&VAO);
+	glGenBuffers(1, &vertexVBO);
+	glGenBuffers(1, &normalVBO);
+
+
+	glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(mesh->vertices), &mesh->vertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(mesh->normals), &mesh->normals, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,0,0);
+	glBindVertexArray(0);
+}
+
+
 
 
 
@@ -155,7 +179,7 @@ void render_particles(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatri
 	glBindVertexArray(0);
 }
 
-void render()
+void render(Object obj)
 {
-
+	
 }

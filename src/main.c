@@ -255,11 +255,6 @@ void getFramerate(char* fps, double &lastTime, int &nbFrames)
 
 int main(int argc, char** argv) 
 {
-	mat4 ModelMatrix;
-	mat4 ViewMatrix;
-	mat4 ProjectionMatrix;
-
-	
 	// FreeType
 	FT_Library library;
 	FT_Face face;
@@ -311,10 +306,8 @@ int main(int argc, char** argv)
 
 	GLuint skyboxTexture = loadCubemap(faces);
 	GLuint skybox_shaders = LoadShaders("shaders/skybox.vs", "shaders/skybox.fs");
-
 	GLuint skyboxVAO, skyboxVBO;
 	glGenVertexArrays(1,&skyboxVAO);
-
 	glBindVertexArray(skyboxVAO);
 		glGenBuffers(1, &skyboxVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
@@ -327,17 +320,16 @@ int main(int argc, char** argv)
 
 	// Initialize Triangle
 	GLuint triangle_shaders = LoadShaders("shaders/triangle.vs", "shaders/triangle.fs");
-
 	GLuint triangleVAO, triangle_vertexVBO, triangle_colorVBO;
 	glGenVertexArrays(1,&triangleVAO);
+	glGenBuffers(1, &triangle_vertexVBO);
+	glGenBuffers(1, &triangle_colorVBO);
 
 	glBindVertexArray(triangleVAO);
-		glGenBuffers(1, &triangle_vertexVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, triangle_vertexVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_data), triangle_data, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,0);
-		glGenBuffers(1, &triangle_colorVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, triangle_colorVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_color), triangle_color, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
@@ -409,13 +401,11 @@ int main(int argc, char** argv)
 
 
 	// Initialize Camera
+	mat4 ModelMatrix, ViewMatrix, ProjectionMatrix;
 	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 10.0f);
 	Position = vec3(-3.0f, 0.0f, 0.0f);
 	azimuth = PI/2.;
 	zenith = PI/2.0f;
-
-	// Initialize Matrices
-	ProjectionMatrix = perspective(45.0f, (GLfloat)4.0 / (GLfloat)3.0, 0.1f, 100.0f);
 
 
 
@@ -463,7 +453,6 @@ int main(int argc, char** argv)
 				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_DYNAMIC_DRAW);
 				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
 			glBindVertexArray(0);
-
 			render_water(water_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, Position, water_vertexVBO, water_normalVBO, waterVAO, vertexdata.size());
 
 			// Render water particles
@@ -474,7 +463,6 @@ int main(int argc, char** argv)
 				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * sph_instance.n_particles, &spritedata[0][0]);
 				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
 			glBindVertexArray(0);
-
 			render_particles(sprite_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, Position, sprite_vertexVBO, spriteVAO, sph_instance.n_particles);
 
 
