@@ -17,12 +17,22 @@ using namespace glm;
 #include "renderer.h"
 
 
+
+
 // Constructor
 Object::Object()
 {
 	glGenVertexArrays(1,&VAO);
 	glGenBuffers(1, &vertexVBO);
-	glGenBuffers(1, &normalVBO);
+	
+	/*
+	if (!= NULL) {
+		glGenBuffers(1, &normalVBO);
+	}
+	if (!= NULL) {
+		glGenBuffers(1, &colorVBO);
+	}
+	*/
 
 
 	glBindVertexArray(VAO);
@@ -179,7 +189,13 @@ void render_particles(GLuint shaders, glm::mat4 ModelMatrix, glm::mat4 ViewMatri
 	glBindVertexArray(0);
 }
 
-void render(Object obj)
+void render(Object& obj)
 {
-	
+	glUseProgram(obj.shaders);
+	glUniformMatrix4fv(glGetUniformLocation(obj.shaders, "ModelMatrix"), 1, GL_FALSE, &(*obj.ModelMatrix)[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(obj.shaders, "ViewMatrix"), 1, GL_FALSE, &(*obj.ViewMatrix)[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(obj.shaders, "ProjectionMatrix"), 1, GL_FALSE, &(*obj.ProjectionMatrix)[0][0]);
+	glBindVertexArray(obj.VAO);
+		glDrawArrays(GL_TRIANGLES, 0, obj.mesh->vertices.size());
+	glBindVertexArray(0);	
 }

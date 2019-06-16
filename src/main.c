@@ -431,13 +431,13 @@ int main(int argc, char** argv)
 
 
 			// Render skybox
-			ViewMatrix = lookAt(vec3(0.0f), DiVector, UpVector); // Ensure that the skybox is rendered from the middle of the box
+			ViewMatrix = glm::lookAt(vec3(0.0f), DiVector, UpVector); // Ensure that the skybox is rendered from the middle of the box
 			render_skybox(skybox_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, skyboxVAO, skyboxTexture);
 		
 
 
 			// Render triangle
-			ViewMatrix = lookAt(Position, Position + DiVector, UpVector); 
+			ViewMatrix = glm::lookAt(Position, Position + DiVector, UpVector); 
 			//ModelMatrix = rotate(mat4(1.0f), GLfloat(currentTime),vec3(1.0f,1.0f,0.0f));
 			//render_triangle(triangle_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, triangleVAO);
 
@@ -470,7 +470,6 @@ int main(int argc, char** argv)
 			// Render text
 			float sx = 2.0 / 1024;	// Needs to be changed later.
 			float sy = 2.0 / 768;
-			
 			render_text(freetype_shaders, "Bubo 2000", -1 + 24 * sx,   1 - 50 * sy,    sx, sy, library, face);
 			getFramerate(fps, lastTime, nbFrames); // get framerate
 			render_text(freetype_shaders, fps, -1 + 24 * sx, 1 - 100 * sy, sx, sy, library, face);
