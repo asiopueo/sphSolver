@@ -21,7 +21,7 @@ GLuint loadCubemap(std::vector<const GLchar*> faces)
 	glActiveTexture(GL_TEXTURE0);
 
 	int width,height;
-	unsigned char* image;
+	void* image;
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 		for(GLuint i = 0; i < faces.size(); i++)

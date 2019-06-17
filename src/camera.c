@@ -29,6 +29,13 @@ Camera::Camera(glm::vec3 position, glm::vec3 direction, glm::vec3 up)
 }
 
 
+
+glm::mat4 Camera::getViewMatrix()
+{
+	return glm::lookAt(Position, Position + DiVector, UpVector); 
+}
+
+
 void Camera::computeMatricesFromInputs(GLFWwindow* window)
 {
 	double xPos, yPos;
@@ -76,7 +83,3 @@ void Camera::computeMatricesFromInputs(GLFWwindow* window)
 
 
 
-glm::mat4 Camera::getViewMatrix()
-{
-	return glm::lookAt(Position, Position + DiVector, UpVector); 
-}
