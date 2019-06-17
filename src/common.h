@@ -33,12 +33,14 @@ typedef struct
 
 
 
-void alloc_search_grid(grid_struc* g, vec3* pos, int n_particles, float grid_len);
+float clamp(float min, float x, float max);
+
+void alloc_search_grid(grid_struc* g, glm::vec3* pos, int n_particles, float grid_len);
 void destroy_search_grid(grid_struc* g);
 
 void create_nbr_list(neighbor_struc* nbr_list);
 void add_neighbor(neighbor_struc* nbr_list, int nbr_index, float distsq);
 void destroy_nbr_list(neighbor_struc* nbr_list);
 
-void set_neighbors(grid_struc* g, neighbor_struc* nbr_list, vec3* pos, int n_particles);
+void set_neighbors(grid_struc* g, neighbor_struc* nbr_list, glm::vec3* pos, int n_particles);
 
