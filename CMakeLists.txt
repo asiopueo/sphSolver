@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.3)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+project(sphSolver)
+include_directories(${PROJECTJ_SRC_DIR})
+file(GLOB SRCS ${PROJECTJ_SRC_DIR}/*.cpp)
+add_executable(sph_solver ${SRCS})
