@@ -1,0 +1,8 @@
+build/
+sph_alpha
+
+.vscode/
+.ionide/
+
+sph.sublime-project
+sph.sublime-workspace
