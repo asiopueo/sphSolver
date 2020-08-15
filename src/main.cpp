@@ -235,9 +235,6 @@ void elapse(void)
 }
 
 
-
-
-
 void getFramerate(char* fps, double &lastTime, int &nbFrames)
 {
 	double currentTime = glfwGetTime();
@@ -253,11 +250,20 @@ void getFramerate(char* fps, double &lastTime, int &nbFrames)
 }
 
 
+// Temporary global variable
 bool renderWater = false;
+
+/*
+ *	Callback function for 
+ */
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	// Toggles surface rendering on and off
     if (key == GLFW_KEY_T && action == GLFW_PRESS) {
         renderWater = !renderWater;
+	}
+	else if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
+		cout << "This key is reserved for the fps display." << endl;
 	}
 }
 
