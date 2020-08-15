@@ -1,4 +1,5 @@
 build/
+ignore/
 sph_alpha
 
 .vscode/
