@@ -1,2 +1,5 @@
 # SPH-Solver
-## Martin Lippl
+## About
+Simple sph-fluid solver utilizing OpenGL
+
+![Screenshot of application](images/sphSolver.png)
