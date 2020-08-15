@@ -156,7 +156,7 @@ void init_FreeType(FT_Library &library, FT_Face &face)
 	  exit(1);
 	}
 
-	if(FT_New_Face(library, "fonts/FreeSans.ttf", 0, &face)) {
+	if(FT_New_Face(library, "../fonts/FreeSans.ttf", 0, &face)) {
 	  fprintf(stderr, "Could not open font\n");
 	  exit(1);
 	}
@@ -290,22 +290,22 @@ int main(int argc, char** argv)
 
 	// Initialize FreeType
 	init_FreeType(library, face);
-	GLuint freetype_shaders = LoadShaders("shaders/freetype.vs", "shaders/freetype.fs");
+	GLuint freetype_shaders = LoadShaders("../shaders/freetype.vs", "../shaders/freetype.fs");
 
 
 
 
 	// Initialize Skybox
 	vector<const GLchar*> faces;
-	faces.push_back("skybox/right.jpg");
-	faces.push_back("skybox/left.jpg");
-	faces.push_back("skybox/top.jpg");
-	faces.push_back("skybox/bottom.jpg");
-	faces.push_back("skybox/back.jpg");
-	faces.push_back("skybox/front.jpg");
+	faces.push_back("../skybox/right.jpg");
+	faces.push_back("../skybox/left.jpg");
+	faces.push_back("../skybox/top.jpg");
+	faces.push_back("../skybox/bottom.jpg");
+	faces.push_back("../skybox/back.jpg");
+	faces.push_back("../skybox/front.jpg");
 
 	GLuint skyboxTexture = loadCubemap(faces);
-	GLuint skybox_shaders = LoadShaders("shaders/skybox.vs", "shaders/skybox.fs");
+	GLuint skybox_shaders = LoadShaders("../shaders/skybox.vs", "../shaders/skybox.fs");
 	GLuint skyboxVAO, skyboxVBO;
 	glGenVertexArrays(1,&skyboxVAO);
 	glBindVertexArray(skyboxVAO);
@@ -319,7 +319,7 @@ int main(int argc, char** argv)
 
 
 	// Initialize Triangle
-	GLuint triangle_shaders = LoadShaders("shaders/triangle.vs", "shaders/triangle.fs");
+	GLuint triangle_shaders = LoadShaders("../shaders/triangle.vs", "../shaders/triangle.fs");
 	GLuint triangleVAO, triangle_vertexVBO, triangle_colorVBO;
 	glGenVertexArrays(1,&triangleVAO);
 	glGenBuffers(1, &triangle_vertexVBO);
@@ -360,8 +360,8 @@ int main(int argc, char** argv)
 
 
 	// Initialize Water
-	GLuint sprite_shaders = LoadShaders("shaders/water_sprites.vs", "shaders/water_sprites.fs");
-	GLuint water_shaders = LoadShaders("shaders/water_refrac.vs", "shaders/water_refrac.fs");
+	GLuint sprite_shaders = LoadShaders("../shaders/water_sprites.vs", "../shaders/water_sprites.fs");
+	GLuint water_shaders = LoadShaders("../shaders/water_refrac.vs", "../shaders/water_refrac.fs");
 
 	GLuint waterVAO, water_vertexVBO, water_normalVBO;
 	glGenVertexArrays(1, &waterVAO);
@@ -470,7 +470,7 @@ int main(int argc, char** argv)
 			// Render text
 			float sx = 2.0 / 1024;	// Needs to be changed later.
 			float sy = 2.0 / 768;
-			render_text(freetype_shaders, "Bubo 2000", -1 + 24 * sx,   1 - 50 * sy,    sx, sy, library, face);
+			render_text(freetype_shaders, "SPH Demo", -1 + 24 * sx,   1 - 50 * sy,    sx, sy, library, face);
 			getFramerate(fps, lastTime, nbFrames); // get framerate
 			render_text(freetype_shaders, fps, -1 + 24 * sx, 1 - 100 * sy, sx, sy, library, face);
 			
