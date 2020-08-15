@@ -235,13 +235,17 @@ void elapse(void)
 }
 
 
+// Temporary global variable
+bool renderWater = false;
+bool displayFps = false;
+
 void getFramerate(char* fps, double &lastTime, int &nbFrames)
 {
 	double currentTime = glfwGetTime();
 	nbFrames++;
 	if ( currentTime - lastTime >= 1.0 )
 	{
-		sprintf(fps, "%3.0f ms/frame", 1000.0f/float(nbFrames));
+		displayFps ? sprintf(fps, "%3.0f ms/frame", 1000.0f/float(nbFrames)) : sprintf(fps, "%3d frames/second", nbFrames);
 		//cout << 1000.0f/double(*nbFrames) << "milliseconds/frame \n";
 		//cout << "Number of frames: " << *nbFrames << "\n";
 		nbFrames = 0;
@@ -250,8 +254,6 @@ void getFramerate(char* fps, double &lastTime, int &nbFrames)
 }
 
 
-// Temporary global variable
-bool renderWater = false;
 
 /*
  *	Callback function for 
@@ -263,7 +265,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         renderWater = !renderWater;
 	}
 	else if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
-		cout << "This key is reserved for the fps display." << endl;
+		displayFps = !displayFps;
 	}
 }
 
