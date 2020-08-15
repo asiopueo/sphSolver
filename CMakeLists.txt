@@ -9,8 +9,9 @@ set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
 project(sphSolver)
 include_directories(${PROJECT_SRC_DIR}/src)
-include_directories("/usr/include" "/usr/local/include")
+include_directories("/usr/include" "/usr/local/include" "/usr/include/freetype2")
 
 add_executable(${PROJECT_NAME} src/main.cpp src/common.cpp src/physics.cpp src/density.cpp src/shaderLoader.cpp src/textureLoader.cpp src/marchingcubes.cpp src/renderer.cpp src/camera.cpp)
-target_include_directories(${PROJECT_NAME} PUBLIC "/usr/lib/nvidia-346" "/usr/lib/x86_64-linux-gnu/" "/usr/local/lib")
-target_link_libraries(${PROJECT_NAME} m nvidia-346 x86_64-linux-gnu glfw GLEW GLU GL Xxf86vm Xrandr pthread Xi Xinerama X11 Xcursor freetype SOIL)
+#target_include_directories(${PROJECT_NAME} PUBLIC "/usr/lib/nvidia-346" "/usr/lib/x86_64-linux-gnu/" "/usr/local/lib")
+# Not sure how to explicilty link nvidia-346 and x86_64-linux-gnu:
+target_link_libraries(${PROJECT_NAME} PUBLIC glfw GLEW GLU GL Xxf86vm Xrandr pthread Xi Xinerama X11 Xcursor freetype SOIL)
