@@ -149,6 +149,10 @@ void compute_matrices_from_inputs()
 }
 
 
+
+
+
+
 void init_FreeType(FT_Library &library, FT_Face &face)
 {
 	if(FT_Init_FreeType(&library)) {
@@ -249,7 +253,13 @@ void getFramerate(char* fps, double &lastTime, int &nbFrames)
 }
 
 
-
+bool renderWater = false;
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+        renderWater = !renderWater;
+	}
+}
 
 
 
@@ -421,6 +431,9 @@ int main(int argc, char** argv)
 	int nbFrames = 0;
 	char fps[30];
 
+	
+
+	glfwSetKeyCallback(window, key_callback);
 
 	do {
 			compute_matrices_from_inputs();
@@ -445,15 +458,17 @@ int main(int argc, char** argv)
 			// Render water
 			ModelMatrix = mat4(1.0f);
 			
-			glBindVertexArray(waterVAO);
-				glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_DYNAMIC_DRAW);
-				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
-				glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_DYNAMIC_DRAW);
-				//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
-			glBindVertexArray(0);
-			render_water(water_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, Position, water_vertexVBO, water_normalVBO, waterVAO, vertexdata.size());
+			if (renderWater) {
+				glBindVertexArray(waterVAO);
+					glBindBuffer(GL_ARRAY_BUFFER, water_vertexVBO);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0], GL_DYNAMIC_DRAW);
+					//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertexdata.size(), &vertexdata[0][0]);
+					glBindBuffer(GL_ARRAY_BUFFER, water_normalVBO);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexdata.size(), &normaldata[0][0], GL_DYNAMIC_DRAW);
+					//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * normaldata.size(), &normaldata[0][0]);
+				glBindVertexArray(0);
+				render_water(water_shaders, ModelMatrix, ViewMatrix, ProjectionMatrix, Position, water_vertexVBO, water_normalVBO, waterVAO, vertexdata.size());
+			}
 
 			// Render water particles
 			get_pos(spritedata, &sph_instance);
