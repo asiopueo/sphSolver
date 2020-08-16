@@ -509,11 +509,11 @@ int main(int argc, char** argv)
 			elapse();
 			
 			// Calculation of isosurfaces:
-			//alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
-			//assign_density_to_grid(&dense, &stamp, &sph_instance);
-			//vertexdata.clear();
-			//normaldata.clear();
-			//polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
+			/*alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
+			assign_density_to_grid(&dense, &stamp, &sph_instance);
+			vertexdata.clear();
+			normaldata.clear();
+			polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);*/
 
 			//cout << vertexdata.size() << endl;
 
