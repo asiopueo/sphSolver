@@ -26,7 +26,7 @@ using namespace std;
 // Definition of constants
 #define SMOOTHING_LENGTH 0.05 // Ein wenig länger als der initiale Teilchenabstand.
 #define VISCOSITY 0.1
-#define MASS 0.1
+#define MASS 100.0
 #define STIFF 1.0
 #define SEARCH_RADIUS (SMOOTHING_LENGTH)
 #define TIME_STEP 0.0001  // TIME_STEP has influence on the stability of the program.
@@ -142,13 +142,11 @@ float laplacian_W_viscosity(vec3 vec_r, float h)
 
 void compute_density(sph_struc* sph, neighbor_struc* nbr_list)
 {
-	int i,j;
-
 	memset(sph->density, 0, sph->n_particles*sizeof(float));
 
-	for (i = 0; i < sph->n_particles; i++)
+	for (int i = 0; i < sph->n_particles; i++)
 	{
-		for (j = 0; j < nbr_list->utilization[i]; j++)
+		for (int j = 0; j < nbr_list->utilization[i]; j++)
 		{
 			float distsq = nbr_list->n_matrix[sph->n_particles*i+j].distsq;
 
@@ -156,6 +154,7 @@ void compute_density(sph_struc* sph, neighbor_struc* nbr_list)
 		}
 	}
 }
+
 
 
 void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
@@ -177,37 +176,115 @@ void compute_force(sph_struc* sph, neighbor_struc* nbr_list)
 			nbr_index = nbr_list->n_matrix[sph->n_particles*i+j].index;
 			vec_r = sph->pos[i] - sph->pos[nbr_index];
 
-			//cout << "p: " << i << "\t n: " << j << endl;
-
 			p_pressure = sph->stiff*(sph->density[i] - 0.0f);
 			n_pressure = sph->stiff*(sph->density[nbr_index] - 0.0f);
 
 			// Pressure-force of particle
-			if (sph->density[nbr_index] != 0.0f)
+			if (sph->density[nbr_index] >= 0.01) {
 				pressure_force = sph->mass * (p_pressure + n_pressure)/(2.0f*sph->density[nbr_index]) * gradient_W_spiky(vec_r,h);
 
-			// Viscosity-force of particle
-			viscosity_force = - sph->viscosity*sph->mass / sph->density[nbr_index]*(sph->vel[i] - sph->vel[nbr_index]) * laplacian_W_viscosity(vec_r,h);
+				cout << "Density:" << sph->density[nbr_index] << endl;
 
-			// Color-field-gradient of particle
-			color_field_gradient = mat3(sph->mass/sph->density[nbr_index]) * gradient_W_poly6(vec_r,h);
+				// Viscosity-force of particle
+				viscosity_force = - sph->viscosity*sph->mass / sph->density[nbr_index]*(sph->vel[i] - sph->vel[nbr_index]) * laplacian_W_viscosity(vec_r,h);
 
-			// Color-field-laplacian of particle
-			color_field_laplacian = sph->mass / sph->density[nbr_index] * laplacian_W_poly_6(vec_r,h);
+				// Color-field-gradient of particle
+				color_field_gradient = mat3(sph->mass/sph->density[nbr_index]) * gradient_W_poly6(vec_r,h);
 
-			// Surface tension ('sigma' fehlt)
-			surface_tension = mat3(-color_field_laplacian/length(color_field_gradient)) * color_field_gradient;
-			
-			sph->force[i] -= mat3(-0.5e4)*vec_r; // experiment with the plus or minus-sign
+				// Color-field-laplacian of particle
+				color_field_laplacian = sph->mass / sph->density[nbr_index] * laplacian_W_poly_6(vec_r,h);
+
+				// Surface tension ('sigma' fehlt)
+				surface_tension = mat3(-color_field_laplacian/length(color_field_gradient)) * color_field_gradient;
+			}
+
+			// Arbitrary attractive linear force for debugging purposes:
+			//sph->force[i] -= mat3(-0.5e4)*vec_r;
 
 		}
+		
+		sph->force[i] += pressure_force + viscosity_force + surface_tension;
+	
+		vec3 gravity = vec3(0.0, -1e3, 0.0);
+		sph->force[i] += sph->mass * gravity;
 
-		//sph->force[i] = mat3(1.0) * (pressure_force + mat3(1.0) * viscosity_force + surface_tension);
+		/*cout << "Force[i].x: " << sph->force[i].x << endl;
+		cout << "Force[i].y: " << sph->force[i].y << endl;
+		cout << "Force[i].z: " << sph->force[i].z << endl;*/
 	}
 }
 
 
 
+void compute_density_inefficient(sph_struc* sph)
+{
+	memset(sph->density, 0, sph->n_particles*sizeof(float));
+
+	for (int i = 0; i < sph->n_particles; i++)
+	{
+		for (int j = 0; j < sph->n_particles; j++)
+		{
+			if (i!=j) {
+				float distsq = length(sph->pos[i] - sph->pos[j]);
+				sph->density[i] += sph->mass * W_poly6(distsq, sph->r_search);
+			}
+		}
+	}
+}
+
+
+void compute_force_inefficient(sph_struc* sph)
+{
+	float h = sph->smoothlen;
+
+	for (int i = 0; i < sph->n_particles; i++)
+	{
+		vec3 pressure_force(0.0), viscosity_force(0.0), surface_tension(0.0), color_field_gradient(0.0);
+		float color_field_laplacian;
+
+		for (int j = 0; j < sph->n_particles; j++)
+		{
+			if (i!=j) {
+				float p_pressure, n_pressure;
+				vec3 vec_r;
+
+				vec_r = sph->pos[i] - sph->pos[j];
+
+				p_pressure = sph->stiff*(sph->density[i] - 0.0f);
+				n_pressure = sph->stiff*(sph->density[j] - 0.0f);
+
+				// Pressure-force of particle
+				if (sph->density[j] >= 0.01) {
+					pressure_force = sph->mass * (p_pressure + n_pressure)/(2.0f*sph->density[j]) * gradient_W_spiky(vec_r,h);
+
+					//cout << "Density:" << sph->density[j] << endl;
+
+					// Viscosity-force of particle
+					viscosity_force = - sph->viscosity*sph->mass / sph->density[j]*(sph->vel[i] - sph->vel[j]) * laplacian_W_viscosity(vec_r,h);
+
+					// Color-field-gradient of particle
+					color_field_gradient = mat3(sph->mass/sph->density[j]) * gradient_W_poly6(vec_r,h);
+
+					// Color-field-laplacian of particle
+					color_field_laplacian = sph->mass / sph->density[j] * laplacian_W_poly_6(vec_r,h);
+
+					// Surface tension ('sigma' fehlt)
+					surface_tension = mat3(-color_field_laplacian/length(color_field_gradient)) * color_field_gradient;
+				}
+
+				// Arbitrary attractive linear force for debugging purposes:
+				//sph->force[i] += mat3(-0.5e4)*vec_r;
+			}
+
+		}
+		
+		sph->force[i] += mat3(0.00) * (pressure_force + viscosity_force + surface_tension);
+	
+		vec3 gravity = vec3(0.0, -1e3, 0.0);
+		gravity = vec3(0.0, 0.0, 0.0);
+		sph->force[i] += sph->mass * gravity;
+	}
+}
 
 
 
@@ -342,30 +419,25 @@ void process_reflection(sph_struc* sph)
 
 void elapse_water(sph_struc* sph, grid_struc* g, neighbor_struc* nbr_list)
 {
-	alloc_search_grid(g, sph->pos, sph->n_particles, sph->r_search);
-	set_neighbors(g, nbr_list, sph->pos, sph->n_particles);
+	//alloc_search_grid(g, sph->pos, sph->n_particles, sph->r_search);
+	//set_neighbors(g, nbr_list, sph->pos, sph->n_particles);
+
+	//compute_density(sph, nbr_list);
+	compute_density_inefficient(sph);
 
 	memset(sph->force, 0, sph->n_particles * sizeof(vec3));
-	//compute_density(sph, nbr_list);
-	compute_force(sph, nbr_list);
+	//compute_force(sph, nbr_list);
+	compute_force_inefficient(sph);
+
 	//process_collision(sph);
 	process_reflection(sph);
 	
-	//float scale = 1.0e-12; // for debugging purposes only
-	vec3 gravity = vec3(0.0, -1e3, 0.0);
-	//vec3 gravity = vec3(0.0);
-
 
 	// Time integration (Euler method)
 	for (int i = 0; i < sph->n_particles; i++)
 	{
-		sph->force[i] += sph->mass * gravity;
-		/*cout << "Force[i].x: " << sph->force[i].x << endl;
-		cout << "Force[i].y: " << sph->force[i].y << endl;
-		cout << "Force[i].z: " << sph->force[i].z << endl;*/
 		sph->vel[i] += mat3(sph->timestep / sph->mass) * sph->force[i];
-		sph->pos[i] += mat3(sph->timestep)*sph->vel[i];// + scale * mat3(0.5f*pow(sph->timestep, 2)/sph->mass) * sph->force[i];
-		
+		sph->pos[i] += mat3(sph->timestep)*sph->vel[i] + mat3(0.5f*pow(sph->timestep, 2)/sph->mass) * sph->force[i];
 	}
 }
 

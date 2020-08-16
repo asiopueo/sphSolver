@@ -102,6 +102,7 @@ GLfloat wrap_angle( float angle )
 }
 
 
+bool fixControls = false;
 
 void compute_matrices_from_inputs()
 {
@@ -112,9 +113,10 @@ void compute_matrices_from_inputs()
 
 	glfwGetCursorPos(window, &xPos, &yPos);
 
-
-	azimuth -= 0.0001f*float(xPos-512);
-	zenith += 0.0001f*float(yPos-384);
+	if (fixControls) {
+		azimuth -= 0.0001f*float(xPos-512);
+		zenith += 0.0001f*float(yPos-384);
+	}
 
 	zenith = clamp(0.0f, zenith, PI);
 
@@ -264,6 +266,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	else if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
 		cout << "This key is reserved for the fps display." << endl;
+	}
+	else if (key == GLFW_KEY_F && action == GLFW_PRESS) {
+		fixControls = !fixControls;
 	}
 }
 
@@ -500,12 +505,13 @@ int main(int argc, char** argv)
 
 			// Elapse simulation
 			elapse();
-			alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
-			assign_density_to_grid(&dense, &stamp, &sph_instance);
 			
-			vertexdata.clear();
-			normaldata.clear();
-			polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
+			// Calculation of isosurfaces:
+			//alloc_density_grid(&dense, &sph_instance, DENSITY_RES);
+			//assign_density_to_grid(&dense, &stamp, &sph_instance);
+			//vertexdata.clear();
+			//normaldata.clear();
+			//polygonize_density(dense, vertexdata, normaldata, ISO_THRESHOLD);
 
 			//cout << vertexdata.size() << endl;
 

@@ -92,14 +92,6 @@ void alloc_search_grid(grid_struc* g, vec3* pos, int n_particles, float grid_len
 
 	g->N_cells = g->width*g->height*g->depth;
 
-	//cout << "N_cells: " << g->N_cells << endl;
-
-	/*if (g->N_cells > 500000)
-	{
-		printf("Abort: N_cells = %d \n", g->N_cells);
-		//exit(0);
-	}*/
-
 	if (g->cell_mem != NULL)
 	{
 		free(g->cell_mem);
@@ -118,9 +110,6 @@ void alloc_search_grid(grid_struc* g, vec3* pos, int n_particles, float grid_len
 		g->utilization[g_index]++;
 	}
 
-	//for (int i=0; i<g->N_cells; i++)
-	//	if (g->utilization[i]> 2)
-	//		cout << i << "th cell: " << g->utilization[i] << endl;
 }
 
 
