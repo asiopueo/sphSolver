@@ -89,7 +89,7 @@ void assign_density_to_grid(density_grid* d, density_stamp* s, sph_struc* sph)
 						d->density[dindex+offset] += s->density[stamp_index];
 					}
 					if ( d->density[dindex+offset] > max )
-						max=d->density[dindex+offset];
+						max = d->density[dindex+offset];
 				}
 			}
 		}
