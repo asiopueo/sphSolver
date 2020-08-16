@@ -24,15 +24,15 @@ using namespace std;
 
 
 // Definition of constants
-#define SMOOTHING_LENGTH 0.05 // Ein wenig länger als der initiale Teilchenabstand.
-#define VISCOSITY 0.1
+#define SMOOTHING_LENGTH 0.3 // Ein wenig länger als der initiale Teilchenabstand.
+#define VISCOSITY 28.0
 #define MASS 100.0
 #define STIFF 1.0
 #define SEARCH_RADIUS (SMOOTHING_LENGTH)
 #define TIME_STEP 0.0001  // TIME_STEP has influence on the stability of the program.
 
 
-#define SCAL_LEN 0.1
+#define SCAL_LEN 0.2
 #define N_PARTICLES (CUBE_LEN_X*CUBE_LEN_Y*CUBE_LEN_Z)
 #define EPSILON 0.05
 
@@ -254,7 +254,7 @@ void compute_force_inefficient(sph_struc* sph)
 				n_pressure = sph->stiff*(sph->density[j] - 0.0f);
 
 				// Pressure-force of particle
-				if (sph->density[j] >= 0.01) {
+				if (sph->density[j] >= 0.0001) {
 					pressure_force = sph->mass * (p_pressure + n_pressure)/(2.0f*sph->density[j]) * gradient_W_spiky(vec_r,h);
 
 					//cout << "Density:" << sph->density[j] << endl;
@@ -278,10 +278,9 @@ void compute_force_inefficient(sph_struc* sph)
 
 		}
 		
-		sph->force[i] += mat3(0.00) * (pressure_force + viscosity_force + surface_tension);
+		sph->force[i] += mat3(1.00) * (pressure_force + viscosity_force + surface_tension);
 	
-		vec3 gravity = vec3(0.0, -1e3, 0.0);
-		gravity = vec3(0.0, 0.0, 0.0);
+		vec3 gravity = vec3(0.0, -1e4, 0.0);
 		sph->force[i] += sph->mass * gravity;
 	}
 }
